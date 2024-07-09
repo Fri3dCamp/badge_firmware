@@ -1,0 +1,14 @@
+version: "0.0.1"
+description: Board Support Package (BSP) for Fri3d Camp badges
+url: https://github.com/Fri3dCamp/
+
+tags:
+  - bsp
+  - fri3d
+
+dependencies:
+  idf: ">=5.2"
+
+  led_indicator:
+    version: "^0.9.3"
+    require: public

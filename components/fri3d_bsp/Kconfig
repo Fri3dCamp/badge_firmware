@@ -1,0 +1,16 @@
+menu "Fri3d Firmware"
+    choice FRI3D_BADGE
+        prompt "Fri3d Badge"
+        default FRI3D_BADGE_FOX
+        help
+            Select the badge you are building the firmware for.
+
+        config FRI3D_BADGE_FOX
+            bool "Fox (2024)"
+
+        config FRI3D_BADGE_OCTOPUS
+            bool "Octopus (2022)"
+
+    endchoice
+
+endmenu
