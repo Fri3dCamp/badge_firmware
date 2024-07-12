@@ -1,16 +1,22 @@
 set(SRCS
-        "src/main.c"
+        "src/application.c"
+)
+
+set(DEPS
+        ""
 )
 
 set(PRIV_DEPS
         "fri3d_bsp"
-        "fri3d_application"
-        "fri3d_launcher"
 )
 
 idf_component_register(
         SRCS
         "${SRCS}"
+        INCLUDE_DIRS
+        "include"
+        REQUIRES
+        "${DEPS}"
         PRIV_REQUIRES
         "${PRIV_DEPS}"
 )
