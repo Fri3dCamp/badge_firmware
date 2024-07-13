@@ -10,4 +10,5 @@
 #error "Unknown board type"
 #endif
 
+#include "bsp_button.h"
 #include "bsp_led.h"

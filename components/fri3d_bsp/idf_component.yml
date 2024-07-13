@@ -12,3 +12,7 @@ dependencies:
   led_indicator:
     version: "^0.9.3"
     require: public
+
+  button:
+    version: "^3.2.3"
+    public: true
