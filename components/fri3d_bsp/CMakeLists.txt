@@ -2,6 +2,7 @@ include(${CMAKE_BINARY_DIR}/../../../cmake/fri3d_component.cmake)
 
 set(SRCS
         "src/bsp_button.c"
+        "src/bsp_buzzer.c"
         "src/bsp_led.c"
         "src/button_custom.c"
         "src/led_blink_defaults.c"

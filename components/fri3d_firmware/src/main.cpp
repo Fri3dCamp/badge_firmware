@@ -43,6 +43,15 @@ void app_main(void)
     }
 #endif
 
+#if BSP_CAPS_BUZZER
+    buzzer_tone(440, 200);
+    buzzer_tone(494, 200);
+    buzzer_tone(523, 200);
+    buzzer_tone(440, 300);
+
+    buzzer_deinit();
+#endif
+
     application.init();
 
     auto &appManager = application.getAppManager();
