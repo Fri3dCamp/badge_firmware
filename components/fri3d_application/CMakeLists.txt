@@ -1,5 +1,9 @@
+include(${CMAKE_BINARY_DIR}/../../../cmake/fri3d_component.cmake)
+
 set(SRCS
-        "src/application.c"
+        "src/app.cpp"
+        "src/app_manager.cpp"
+        "src/application.cpp"
 )
 
 set(DEPS
@@ -15,8 +19,12 @@ idf_component_register(
         "${SRCS}"
         INCLUDE_DIRS
         "include"
+        PRIV_INCLUDE_DIRS
+        "src/include"
         REQUIRES
         "${DEPS}"
         PRIV_REQUIRES
         "${PRIV_DEPS}"
 )
+
+fri3d_set_loglevel()

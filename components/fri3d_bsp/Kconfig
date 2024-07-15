@@ -13,4 +13,21 @@ menu "Fri3d Firmware"
 
     endchoice
 
+    choice FRI3D_LOG
+        prompt "Fri3d components debug level"
+        default FRI3D_LOG_INFO
+        help
+            Increase the debug output level for Fri3d components
+
+        config FRI3D_LOG_INFO
+            bool "Info"
+
+        config FRI3D_LOG_DEBUG
+            bool "Debug"
+
+        config FRI3D_LOG_VERBOSE
+            bool "Verbose"
+
+    endchoice
+
 endmenu

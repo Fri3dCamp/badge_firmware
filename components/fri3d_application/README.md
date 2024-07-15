@@ -2,6 +2,7 @@
 
 This component defines a basic framework for an application. It imposes the usage of amongst others
 
+* C++
 * LVGL
 * An `indev` driver
 * Specific settings for hardware
