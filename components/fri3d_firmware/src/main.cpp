@@ -6,6 +6,9 @@
 #include "fri3d_bsp/bsp.h"
 #include "fri3d_launcher/launcher.hpp"
 
+#include "fri3d_util/rtttl/rtttl.h"
+#include "fri3d_util/rtttl/rtttl_songs.h"
+
 using namespace Fri3d::Application;
 using namespace Fri3d::Apps;
 
@@ -46,12 +49,8 @@ void app_main(void)
 
 #if BSP_CAPS_BUZZER
     ESP_LOGI(TAG, "Init buzzer");
-    buzzer_tone(440, 200);
-    buzzer_tone(494, 200);
-    buzzer_tone(523, 200);
-    buzzer_tone(440, 300);
 
-    buzzer_deinit();
+    play_rtttl_task(dump_dump_s, 20);
 #endif
 
     application.init();

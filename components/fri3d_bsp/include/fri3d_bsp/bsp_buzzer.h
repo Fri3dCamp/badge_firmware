@@ -16,7 +16,7 @@ void buzzer_deinit();
  * @param freq the frequency of the sound
  * @param duration the duration (ms)
  */
-void buzzer_tone(uint32_t freq, uint32_t duration);
+void buzzer_tone(uint32_t freq, uint32_t duration, uint8_t volume);
 
 #ifdef __cplusplus
 }
