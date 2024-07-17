@@ -17,6 +17,7 @@ private:
     std::experimental::propagate_const<std::unique_ptr<impl>> base;
 
     friend class CAppManager;
+
 public:
     CBaseApp();
     ~CBaseApp();
@@ -60,4 +61,4 @@ public:
     virtual void deactivate() = 0;
 };
 
-}
+} // namespace Fri3d::Application

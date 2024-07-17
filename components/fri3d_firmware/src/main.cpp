@@ -1,9 +1,9 @@
-#include "esp_log.h"
 #include "esp_lcd_panel_ops.h"
+#include "esp_log.h"
 
-#include "fri3d_bsp/bsp.h"
 #include "fri3d_application/app_manager.hpp"
 #include "fri3d_application/application.hpp"
+#include "fri3d_bsp/bsp.h"
 #include "fri3d_launcher/launcher.hpp"
 
 using namespace Fri3d::Application;
@@ -19,7 +19,7 @@ static led_indicator_handle_t leds[1];
 #if BSP_CAPS_BUTTONS
 static void btn_handler(void *button_handle, void *usr_data)
 {
-    int button_pressed = (int) usr_data;
+    int button_pressed = (int)usr_data;
     ESP_LOGI(TAG, "button pressed %d", button_pressed);
 }
 #endif
@@ -40,7 +40,7 @@ void app_main(void)
     ESP_ERROR_CHECK(bsp_iot_button_create(btns, nullptr, BSP_BUTTON_NUM));
     for (int i = 0; i < BSP_BUTTON_NUM; i++)
     {
-        ESP_ERROR_CHECK(iot_button_register_cb(btns[i], BUTTON_PRESS_DOWN, btn_handler, (void *) i));
+        ESP_ERROR_CHECK(iot_button_register_cb(btns[i], BUTTON_PRESS_DOWN, btn_handler, (void *)i));
     }
 #endif
 
@@ -79,5 +79,4 @@ void app_main(void)
 
     application.deinit();
 }
-
 };

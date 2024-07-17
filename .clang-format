@@ -1,0 +1,10 @@
+BasedOnStyle: Microsoft
+
+IndentAccessModifiers: false
+AccessModifierOffset: -4
+PackConstructorInitializers: Never
+BreakConstructorInitializers: BeforeComma
+AlignConsecutiveMacros: AcrossEmptyLinesAndComments
+IndentExternBlock: NoIndent
+BraceWrapping:
+  AfterExternBlock: false

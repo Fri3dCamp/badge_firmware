@@ -11,8 +11,8 @@ namespace Fri3d::Application
 
 static const char *TAG = "Fri3d::Application::CAppManager";
 
-CAppManager::CAppManager() :
-    defaultApp(nullptr)
+CAppManager::CAppManager()
+    : defaultApp(nullptr)
 {
     esp_log_level_set(TAG, static_cast<esp_log_level_t>(LOG_LOCAL_LEVEL));
 }
@@ -55,10 +55,7 @@ CBaseApp *CAppManager::checkApp(const Fri3d::Application::CBaseApp &app)
     // non-const references as we need to operate on the apps. That's why we cast const away
     CBaseApp *ref = &const_cast<CBaseApp &>(app);
 
-    auto it = std::find_if(
-        this->apps.begin(), this->apps.end(),
-        [ref](CBaseApp *a) { return a == ref; }
-    );
+    auto it = std::find_if(this->apps.begin(), this->apps.end(), [ref](CBaseApp *a) { return a == ref; });
 
     if (it == this->apps.end())
     {
@@ -140,33 +137,33 @@ void CAppManager::work()
 
             switch (event.eventType)
             {
-                case EventType::Shutdown:
-                    if (previous)
-                    {
-                        previous->deactivate();
-                    }
-                    running = false;
-                    break;
+            case EventType::Shutdown:
+                if (previous)
+                {
+                    previous->deactivate();
+                }
+                running = false;
+                break;
 
-                case ActivateDefaultApp:
-                    ESP_LOGD(TAG, "Default app activated, cleaning navigation history.");
-                    navigation = IAppList();
+            case ActivateDefaultApp:
+                ESP_LOGD(TAG, "Default app activated, cleaning navigation history.");
+                navigation = IAppList();
 
-                    // We fall through to app activation
-                    [[fallthrough]];
+                // We fall through to app activation
+                [[fallthrough]];
 
-                case ActivateApp:
-                    navigation.push_back(event.targetApp);
-                    this->switchApp(previous, event.targetApp);
-                    break;
+            case ActivateApp:
+                navigation.push_back(event.targetApp);
+                this->switchApp(previous, event.targetApp);
+                break;
 
-                case PreviousApp:
-                    if (navigation.size() > 1)
-                    {
-                        navigation.pop_back();
-                        this->switchApp(previous, navigation.back());
-                    }
-                    break;
+            case PreviousApp:
+                if (navigation.size() > 1)
+                {
+                    navigation.pop_back();
+                    this->switchApp(previous, navigation.back());
+                }
+                break;
             }
         }
     }
@@ -177,7 +174,7 @@ void CAppManager::sendEvent(CAppManager::EventType eventType, CBaseApp *targetAp
     ESP_LOGV(TAG, "Sending event (eventType: %d; targetApp: %p)", eventType, targetApp);
     {
         std::lock_guard lock(this->eventsMutex);
-        this->events.push(CEvent{ .eventType = eventType, .targetApp = targetApp });
+        this->events.push(CEvent{.eventType = eventType, .targetApp = targetApp});
     }
 
     this->eventsSignal.notify_all();
@@ -195,4 +192,4 @@ void CAppManager::switchApp(CBaseApp *from, CBaseApp *to)
     to->activate();
 }
 
-}
+} // namespace Fri3d::Application

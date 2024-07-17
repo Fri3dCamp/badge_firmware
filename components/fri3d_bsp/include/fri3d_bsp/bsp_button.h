@@ -1,7 +1,7 @@
 #pragma once
 
-#include "iot_button.h"
 #include "button_custom.h"
+#include "iot_button.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -17,12 +17,12 @@ extern "C" {
 
 /**
  * @brief Configuration structure to define buttons
- * 
+ *
  */
 typedef struct
 {
-    int32_t gpio_num;                 /**< num of gpio */
-    gpio_pull_mode_t gpio_pull_mode;  /**< gpio pull mode, implemented for GPIO_FLOATING, GPIO_PULLUP_ONLY */
+    int32_t gpio_num;                /**< num of gpio */
+    gpio_pull_mode_t gpio_pull_mode; /**< gpio pull mode, implemented for GPIO_FLOATING, GPIO_PULLUP_ONLY */
 } bsp_button_config_t;
 
 /**

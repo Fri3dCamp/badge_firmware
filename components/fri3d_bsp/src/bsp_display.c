@@ -1,19 +1,16 @@
-#include "esp_check.h"
-#include "esp_log.h"
-#include "esp_lcd_panel_io.h"
-#include "esp_lcd_panel_vendor.h"
-#include "esp_lcd_panel_ops.h"
 #include "driver/spi_master.h"
+#include "esp_check.h"
+#include "esp_lcd_panel_io.h"
+#include "esp_lcd_panel_ops.h"
+#include "esp_lcd_panel_vendor.h"
+#include "esp_log.h"
 
 #include "fri3d_bsp/bsp.h"
 
 static const char *TAG = "fri3d_bsp_display";
 
-esp_err_t bsp_display_new(
-    const bsp_display_config_t *config,
-    esp_lcd_panel_handle_t *ret_panel,
-    esp_lcd_panel_io_handle_t *ret_io
-)
+esp_err_t bsp_display_new(const bsp_display_config_t *config, esp_lcd_panel_handle_t *ret_panel,
+                          esp_lcd_panel_io_handle_t *ret_io)
 {
     esp_log_level_set(TAG, LOG_LOCAL_LEVEL);
 
@@ -42,12 +39,8 @@ esp_err_t bsp_display_new(
         .spi_mode = 0,
         .trans_queue_depth = 10,
     };
-    ESP_GOTO_ON_ERROR(
-        esp_lcd_new_panel_io_spi((esp_lcd_spi_bus_handle_t) BSP_SPI_HOST, &io_config, ret_io),
-        err,
-        TAG,
-        "New panel IO failed"
-    );
+    ESP_GOTO_ON_ERROR(esp_lcd_new_panel_io_spi((esp_lcd_spi_bus_handle_t)BSP_SPI_HOST, &io_config, ret_io), err, TAG,
+                      "New panel IO failed");
 
     ESP_LOGD(TAG, "Install LCD driver");
     const esp_lcd_panel_dev_config_t panel_config = {
@@ -60,20 +53,16 @@ esp_err_t bsp_display_new(
     ESP_GOTO_ON_ERROR(esp_lcd_panel_reset(*ret_panel), err, TAG, "Failed to reset panel");
     ESP_GOTO_ON_ERROR(esp_lcd_panel_init(*ret_panel), err, TAG, "Failed to init panel");
 
-    ESP_GOTO_ON_ERROR(esp_lcd_panel_invert_color(*ret_panel, BSP_LCD_INVERT),
-                      err,
-                      TAG,
+    ESP_GOTO_ON_ERROR(esp_lcd_panel_invert_color(*ret_panel, BSP_LCD_INVERT), err, TAG,
                       "Failed to set color inversion");
     ESP_GOTO_ON_ERROR(esp_lcd_panel_swap_xy(*ret_panel, BSP_LCD_SWAP_XY), err, TAG, "Failed to set xy swap");
-    ESP_GOTO_ON_ERROR(esp_lcd_panel_mirror(*ret_panel, BSP_LCD_MIRROR_X, BSP_LCD_MIRROR_Y),
-                      err,
-                      TAG,
+    ESP_GOTO_ON_ERROR(esp_lcd_panel_mirror(*ret_panel, BSP_LCD_MIRROR_X, BSP_LCD_MIRROR_Y), err, TAG,
                       "Failed to set XY mirroring");
 
     ret = bsp_display_fill(*ret_panel, 0x0000);
     return ret;
 
-    err:
+err:
     if (*ret_panel)
     {
         esp_lcd_panel_del(*ret_panel);
@@ -100,16 +89,14 @@ esp_err_t bsp_display_fill(esp_lcd_panel_handle_t panel, uint16_t color)
 
     for (int line = 0; line < BSP_LCD_HEIGHT; line++)
     {
-        ESP_GOTO_ON_ERROR(esp_lcd_panel_draw_bitmap(panel, 0, line, BSP_LCD_WIDTH, line + 1, buf),
-                          err,
-                          TAG,
+        ESP_GOTO_ON_ERROR(esp_lcd_panel_draw_bitmap(panel, 0, line, BSP_LCD_WIDTH, line + 1, buf), err, TAG,
                           "Could not draw to panel");
     }
 
     heap_caps_free(buf);
 
     return ret;
-    err:
+err:
     heap_caps_free(buf);
     return ret;
 }

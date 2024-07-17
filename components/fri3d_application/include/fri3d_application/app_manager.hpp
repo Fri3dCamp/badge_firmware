@@ -38,4 +38,4 @@ public:
     virtual void previousApp() = 0;
 };
 
-}
+} // namespace Fri3d::Application

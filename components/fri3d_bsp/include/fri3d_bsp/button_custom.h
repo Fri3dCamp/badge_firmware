@@ -1,7 +1,7 @@
 #pragma once
 
-#include "hal/gpio_types.h"
 #include "esp_err.h"
+#include "hal/gpio_types.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -11,12 +11,13 @@ extern "C" {
  * @brief custom button configuration
  *
  */
-typedef struct {
-    int32_t gpio_num;                 /**< num of gpio */
-    uint8_t active_level;             /**< gpio level when press down */
-    gpio_pull_mode_t gpio_pull_mode;  /**< gpio pull mode */
+typedef struct
+{
+    int32_t gpio_num;                /**< num of gpio */
+    uint8_t active_level;            /**< gpio level when press down */
+    gpio_pull_mode_t gpio_pull_mode; /**< gpio pull mode */
 #if CONFIG_GPIO_BUTTON_SUPPORT_POWER_SAVE
-    bool enable_power_save;           /**< enable power save mode */
+    bool enable_power_save; /**< enable power save mode */
 #endif
 } bsp_button_custom_config_t;
 

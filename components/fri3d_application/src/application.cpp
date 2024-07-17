@@ -12,9 +12,9 @@ namespace Fri3d::Application
 
 static const char *TAG = "Fri3d::Application::CApplication";
 
-CApplication::CApplication() :
-    running(false),
-    initialized(false)
+CApplication::CApplication()
+    : running(false)
+    , initialized(false)
 {
     esp_log_level_set(TAG, static_cast<esp_log_level_t>(LOG_LOCAL_LEVEL));
 }
@@ -58,4 +58,4 @@ void CApplication::run(const CBaseApp &app)
 static CApplication application_impl;
 IApplication &application = application_impl;
 
-}
+} // namespace Fri3d::Application

@@ -61,4 +61,4 @@ public:
     void stop();
 };
 
-}
+} // namespace Fri3d::Application

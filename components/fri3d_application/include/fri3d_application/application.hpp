@@ -34,4 +34,4 @@ public:
 
 extern IApplication &application;
 
-}
+} // namespace Fri3d::Application

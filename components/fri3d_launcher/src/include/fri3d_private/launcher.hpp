@@ -19,4 +19,4 @@ public:
     void deactivate() override;
 };
 
-}
+} // namespace Fri3d::Apps::Launcher

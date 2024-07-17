@@ -9,7 +9,8 @@ namespace Fri3d::Application
 
 static const char *TAG = "CBaseApp";
 
-CBaseApp::CBaseApp() : base{ std::make_unique<CBaseApp::impl>() }
+CBaseApp::CBaseApp()
+    : base{std::make_unique<CBaseApp::impl>()}
 {
     esp_log_level_set(TAG, static_cast<esp_log_level_t>(LOG_LOCAL_LEVEL));
 };
@@ -31,4 +32,4 @@ IAppManager &CBaseApp::getAppManager() const
     return this->base->getAppManager();
 }
 
-}
+} // namespace Fri3d::Application

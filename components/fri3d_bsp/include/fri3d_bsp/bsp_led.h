@@ -5,7 +5,8 @@ extern "C" {
 #endif
 
 /* Default LED effects */
-enum {
+enum
+{
     BSP_LED_ON,
     BSP_LED_OFF,
     BSP_LED_BLINK_FAST,

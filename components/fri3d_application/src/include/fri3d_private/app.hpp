@@ -15,4 +15,4 @@ public:
     [[nodiscard]] IAppManager &getAppManager() const;
 };
 
-}
+} // namespace Fri3d::Application

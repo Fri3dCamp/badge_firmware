@@ -1,8 +1,8 @@
 #include "esp_log.h"
 
-#include "stdio.h"
-#include "freertos/FreeRTOS.h"
 #include "driver/ledc.h"
+#include "freertos/FreeRTOS.h"
+#include "stdio.h"
 
 #include "fri3d_bsp/bsp.h"
 
@@ -44,11 +44,8 @@ void buzzer_tone(uint32_t freq, uint32_t duration)
     ESP_ERROR_CHECK(ledc_channel_config(&ledc_conf));
 
     // start
-    ESP_ERROR_CHECK(ledc_set_duty(
-        LEDC_LOW_SPEED_MODE,
-        LEDC_CHANNEL_0,
-        0x7F
-    )); // 12% duty - play here for your speaker or buzzer
+    ESP_ERROR_CHECK(ledc_set_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0,
+                                  0x7F)); // 12% duty - play here for your speaker or buzzer
     ESP_ERROR_CHECK(ledc_update_duty(LEDC_LOW_SPEED_MODE, LEDC_CHANNEL_0));
     vTaskDelay(duration / portTICK_PERIOD_MS);
     // stop

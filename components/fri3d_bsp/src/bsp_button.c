@@ -11,8 +11,7 @@ esp_err_t bsp_iot_button_create(button_handle_t btn_array[], int *btn_cnt, int b
     esp_log_level_set(TAG, LOG_LOCAL_LEVEL);
 
     esp_err_t ret = ESP_OK;
-    if ((btn_array_size < BSP_BUTTON_NUM) ||
-        (btn_array == NULL))
+    if ((btn_array_size < BSP_BUTTON_NUM) || (btn_array == NULL))
     {
         return ESP_ERR_INVALID_ARG;
     }
@@ -23,7 +22,7 @@ esp_err_t bsp_iot_button_create(button_handle_t btn_array[], int *btn_cnt, int b
     }
     for (int i = 0; i < BSP_BUTTON_NUM; i++)
     {
-        button_config_t *config = (button_config_t *) calloc(1, sizeof(button_config_t));
+        button_config_t *config = (button_config_t *)calloc(1, sizeof(button_config_t));
 
         if (config == NULL)
         {
@@ -47,8 +46,8 @@ esp_err_t bsp_iot_button_create(button_handle_t btn_array[], int *btn_cnt, int b
             config->custom_button_config.button_custom_get_key_value = bsp_button_custom_get_key_level;
             config->custom_button_config.button_custom_deinit = NULL;
 
-            bsp_button_custom_config_t
-                *custom_private = (bsp_button_custom_config_t *) calloc(1, sizeof(bsp_button_custom_config_t));
+            bsp_button_custom_config_t *custom_private =
+                (bsp_button_custom_config_t *)calloc(1, sizeof(bsp_button_custom_config_t));
             if (custom_private == NULL)
             {
                 ESP_LOGE(TAG, "Memory error calloc bsp_button_custom_config_t failed.");
@@ -63,7 +62,6 @@ esp_err_t bsp_iot_button_create(button_handle_t btn_array[], int *btn_cnt, int b
 #endif
 
             config->custom_button_config.priv = custom_private;
-
         }
         else
         {

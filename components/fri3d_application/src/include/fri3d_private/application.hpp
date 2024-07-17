@@ -24,4 +24,4 @@ public:
     void run(const CBaseApp &app) override;
 };
 
-}
+} // namespace Fri3d::Application

@@ -4,8 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include "led_indicator.h"
 #include "fri3d_bsp/bsp.h"
+#include "led_indicator.h"
 
 /*********************************** Config Blink List ***********************************/
 /**

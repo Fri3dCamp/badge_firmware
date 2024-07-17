@@ -12,7 +12,7 @@ extern "C" {
  */
 typedef struct
 {
-    int max_transfer_sz;    /*!< Maximum transfer size, in bytes. */
+    int max_transfer_sz; /*!< Maximum transfer size, in bytes. */
 } bsp_display_config_t;
 
 /**
@@ -38,11 +38,8 @@ typedef struct
  *      - ESP_OK         On success
  *      - Else           esp_lcd failure
  */
-esp_err_t bsp_display_new(
-    const bsp_display_config_t *config,
-    esp_lcd_panel_handle_t *ret_panel,
-    esp_lcd_panel_io_handle_t *ret_io
-);
+esp_err_t bsp_display_new(const bsp_display_config_t *config, esp_lcd_panel_handle_t *ret_panel,
+                          esp_lcd_panel_io_handle_t *ret_io);
 
 /**
  * @brief Fill the entire screen with a certain color

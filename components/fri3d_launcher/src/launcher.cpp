@@ -51,4 +51,4 @@ void CLauncher::deactivate()
 static CLauncher launcher_impl;
 Application::CBaseApp &launcher = launcher_impl;
 
-}
+} // namespace Fri3d::Apps::Launcher
