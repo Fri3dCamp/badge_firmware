@@ -21,14 +21,30 @@ CApplication::CApplication()
 
 void CApplication::init()
 {
+    if (this->initialized)
+    {
+        throw std::runtime_error("Application already initialized");
+    }
+
     ESP_LOGI(TAG, "Initializing application");
+    this->lvgl.init();
     this->appManager.init();
+
+    this->initialized = true;
 }
 
 void CApplication::deinit()
 {
+    if (!this->initialized)
+    {
+        ESP_LOGW(TAG, "Application is not initialized");
+    }
+
     this->appManager.deinit();
+    this->lvgl.deinit();
     ESP_LOGI(TAG, "Deinitializing application");
+
+    this->initialized = false;
 }
 
 IAppManager &CApplication::getAppManager()
@@ -38,6 +54,7 @@ IAppManager &CApplication::getAppManager()
 
 void CApplication::run(const CBaseApp &app)
 {
+    this->lvgl.start();
     this->appManager.setDefaultApp(app);
 
     this->appManager.start();
@@ -53,6 +70,7 @@ void CApplication::run(const CBaseApp &app)
     }
 
     this->appManager.stop();
+    this->lvgl.stop();
 }
 
 static CApplication application_impl;

@@ -1,12 +1,16 @@
 #pragma once
 
 #include "fri3d_application/app.hpp"
+#include "lvgl.h"
 
 namespace Fri3d::Apps::Launcher
 {
 
 class CLauncher : public Application::CBaseApp
 {
+private:
+    lv_obj_t *label;
+
 public:
     CLauncher();
 

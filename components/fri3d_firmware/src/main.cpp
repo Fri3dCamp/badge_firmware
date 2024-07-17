@@ -54,21 +54,6 @@ void app_main(void)
     buzzer_deinit();
 #endif
 
-#if BSP_CAPS_DISPLAY
-    ESP_LOGI(TAG, "Init display");
-    esp_lcd_panel_io_handle_t io_handle = nullptr;
-    esp_lcd_panel_handle_t panel_handle = nullptr;
-
-    const bsp_display_config_t bsp_disp_cfg = {
-        .max_transfer_sz = BSP_LCD_WIDTH * sizeof(uint16_t),
-    };
-
-    ESP_ERROR_CHECK(bsp_display_new(&bsp_disp_cfg, &panel_handle, &io_handle));
-    ESP_ERROR_CHECK(esp_lcd_panel_disp_on_off(panel_handle, true));
-
-    ESP_ERROR_CHECK(bsp_display_fill(panel_handle, 0xFF00));
-
-#endif
     application.init();
 
     auto &appManager = application.getAppManager();

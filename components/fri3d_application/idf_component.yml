@@ -1,0 +1,13 @@
+version: "0.0.1"
+description: Application base code for Fri3d Camp badges
+url: https://github.com/Fri3dCamp/
+
+tags:
+  - fri3d
+
+dependencies:
+  idf: ">=5.2"
+
+  lvgl/lvgl:
+    version: "^9.1.0"
+    public: true

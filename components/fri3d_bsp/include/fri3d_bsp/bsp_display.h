@@ -1,5 +1,7 @@
 #pragma once
 
+#include "esp_err.h"
+#include "esp_lcd_panel_io.h"
 #include "esp_lcd_types.h"
 
 #ifdef __cplusplus
@@ -12,7 +14,10 @@ extern "C" {
  */
 typedef struct
 {
-    int max_transfer_sz; /*!< Maximum transfer size, in bytes. */
+    int max_transfer_sz;
+    esp_lcd_panel_io_color_trans_done_cb_t on_color_trans_done;
+    void *user_ctx;
+
 } bsp_display_config_t;
 
 /**

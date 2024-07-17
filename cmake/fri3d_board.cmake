@@ -19,4 +19,4 @@ include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 # https://github.com/espressif/esp-idf/issues/14157
 # We inject components that have a idf_component.yml file into the top-level COMPONENTS in order for the component
 # manager to work
-list(APPEND COMPONENTS "fri3d_bsp")
+list(APPEND COMPONENTS "fri3d_bsp fri3d_application")

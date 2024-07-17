@@ -1,5 +1,4 @@
 #include <algorithm>
-#include <exception>
 
 #include "esp_log.h"
 
@@ -59,7 +58,7 @@ CBaseApp *CAppManager::checkApp(const Fri3d::Application::CBaseApp &app)
 
     if (it == this->apps.end())
     {
-        throw std::runtime_error("App is not registred.");
+        throw std::runtime_error("App is not registered.");
     }
 
     return ref;

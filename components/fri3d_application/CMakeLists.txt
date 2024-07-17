@@ -4,6 +4,7 @@ set(SRCS
         "src/app.cpp"
         "src/app_manager.cpp"
         "src/application.cpp"
+        "src/lvgl.cpp"
 )
 
 set(DEPS

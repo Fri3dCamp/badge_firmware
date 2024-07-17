@@ -8,3 +8,10 @@ AlignConsecutiveMacros: AcrossEmptyLinesAndComments
 IndentExternBlock: NoIndent
 BraceWrapping:
   AfterExternBlock: false
+SeparateDefinitionBlocks: Always
+BinPackParameters: false
+BinPackArguments: false
+AlignAfterOpenBracket: AlwaysBreak
+AllowAllArgumentsOnNextLine: false
+AllowAllParametersOfDeclarationOnNextLine: false
+AllowAllConstructorInitializersOnNextLine: false

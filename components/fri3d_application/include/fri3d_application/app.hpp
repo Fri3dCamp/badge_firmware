@@ -3,6 +3,9 @@
 #include <experimental/propagate_const>
 #include <memory>
 
+// We include this here for convenience, as most apps will need it.
+#include "lvgl.hpp"
+
 namespace Fri3d::Application
 {
 
