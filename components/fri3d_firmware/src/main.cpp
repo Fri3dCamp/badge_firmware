@@ -1,7 +1,6 @@
 #include "esp_lcd_panel_ops.h"
 #include "esp_log.h"
 
-#include "fri3d_application/app_manager.hpp"
 #include "fri3d_application/application.hpp"
 #include "fri3d_bsp/bsp.h"
 #include "fri3d_launcher/launcher.hpp"
