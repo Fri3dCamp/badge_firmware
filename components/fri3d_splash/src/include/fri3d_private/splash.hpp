@@ -1,20 +1,23 @@
 #pragma once
 
-#include "fri3d_application/app.hpp"
-#include "lvgl.h"
+#include <mutex>
+#include <thread>
 
-namespace Fri3d::Apps::Launcher
+#include "fri3d_application/app.hpp"
+
+namespace Fri3d::Apps::Splash
 {
 
-class CLauncher : public Application::CBaseApp
+class CSplash : public Application::CBaseApp
 {
 private:
-    lv_obj_t *label;
-
-    bool splashShown;
+    std::thread worker;
+    std::mutex workerMutex;
+    bool running;
+    void work() const;
 
 public:
-    CLauncher();
+    CSplash();
 
     void init() override;
     void deinit() override;
@@ -25,4 +28,4 @@ public:
     void deactivate() override;
 };
 
-} // namespace Fri3d::Apps::Launcher
+} // namespace Fri3d::Apps::Splash

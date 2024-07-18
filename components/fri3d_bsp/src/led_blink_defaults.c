@@ -13,7 +13,7 @@
  *
  */
 static const blink_step_t bsp_led_on[] = {
-    {LED_BLINK_HOLD, LED_STATE_ON, 0},
+    {LED_BLINK_RGB, SET_IRGB(MAX_INDEX, 255, 255, 255), 0},
     {LED_BLINK_STOP, 0, 0},
 };
 
@@ -22,7 +22,7 @@ static const blink_step_t bsp_led_on[] = {
  *
  */
 static const blink_step_t bsp_led_off[] = {
-    {LED_BLINK_HOLD, LED_STATE_OFF, 0},
+    {LED_BLINK_RGB, SET_IRGB(MAX_INDEX, 0, 0, 0), 0},
     {LED_BLINK_STOP, 0, 0},
 };
 
