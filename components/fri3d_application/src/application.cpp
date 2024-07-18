@@ -38,6 +38,7 @@ void CApplication::deinit()
     if (!this->initialized)
     {
         ESP_LOGW(TAG, "Application is not initialized");
+        return;
     }
 
     this->appManager.deinit();
