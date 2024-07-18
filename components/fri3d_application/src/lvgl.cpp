@@ -96,6 +96,8 @@ void CLVGL::init()
         lv_init();
     }
 
+    lv_lock();
+
     ESP_LOGI(TAG, "Initializing LVGL display with size %dx%d", BSP_LCD_WIDTH, BSP_LCD_HEIGHT);
     this->lv_display = lv_display_create(BSP_LCD_WIDTH, BSP_LCD_HEIGHT);
 
@@ -123,6 +125,8 @@ void CLVGL::init()
         &lv_font_montserrat_14);
 
     lv_display_set_theme(this->lv_display, theme);
+
+    lv_unlock();
 }
 
 void CLVGL::deinit()
@@ -151,9 +155,7 @@ bool CLVGL::on_color_trans_done(esp_lcd_panel_io_handle_t panel_io, esp_lcd_pane
 
     if (self->lv_display != nullptr)
     {
-        lv_lock_isr();
         lv_disp_flush_ready(self->lv_display);
-        lv_unlock();
     }
 
     return false;
@@ -195,7 +197,10 @@ void CLVGL::work() const
 {
     while (this->running)
     {
+        // In LVGL 9.2 and above, the lock will be taken internally in lv_timer_handler() and should be removed here
+        lv_lock();
         auto sleep_time = lv_timer_handler();
+        lv_unlock();
 
         if (sleep_time == LV_NO_TIMER_READY)
         {
