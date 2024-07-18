@@ -10,7 +10,7 @@ namespace Fri3d::Application
 class IAppManager
 {
 public:
-    typedef std::vector<CBaseApp *> IAppList;
+    typedef std::vector<const CBaseApp *> IAppList;
 
     /**
      * @brief register a new app in the manager

@@ -12,6 +12,7 @@ static const char *TAG = "Fri3d::Application::CAppManager";
 
 CAppManager::CAppManager()
     : defaultApp(nullptr)
+    , newEvents(false)
 {
     esp_log_level_set(TAG, static_cast<esp_log_level_t>(LOG_LOCAL_LEVEL));
 }
@@ -24,13 +25,13 @@ void CAppManager::init()
 void CAppManager::deinit()
 {
     ESP_LOGI(TAG, "Deinitializing all apps");
-    for (CBaseApp *app : this->apps)
+    for (auto app : this->apps)
     {
-        app->deinit();
+        const_cast<CBaseApp *>(app)->deinit();
     }
 
     ESP_LOGI(TAG, "Deinitializing");
-    this->apps = std::vector<CBaseApp *>();
+    this->apps = std::vector<const CBaseApp *>();
 }
 
 void CAppManager::registerApp(CBaseApp &app)
@@ -54,7 +55,7 @@ CBaseApp *CAppManager::checkApp(const Fri3d::Application::CBaseApp &app)
     // non-const references as we need to operate on the apps. That's why we cast const away
     CBaseApp *ref = &const_cast<CBaseApp &>(app);
 
-    auto it = std::find_if(this->apps.begin(), this->apps.end(), [ref](CBaseApp *a) { return a == ref; });
+    auto it = std::find_if(this->apps.begin(), this->apps.end(), [ref](const CBaseApp *a) { return a == ref; });
 
     if (it == this->apps.end())
     {
@@ -120,17 +121,25 @@ void CAppManager::stop()
 void CAppManager::work()
 {
     bool running = true;
-    IAppList navigation;
-    std::unique_lock lock(eventsMutex);
+    NavigationList navigation;
+    CEvents processing;
 
     while (running)
     {
-        eventsSignal.wait(lock);
-
-        while (!this->events.empty())
+        ESP_LOGV(TAG, "Waiting on new events");
+        this->newEvents.wait(false);
         {
-            auto event = this->events.front();
-            this->events.pop();
+            ESP_LOGV(TAG, "New events received");
+            std::lock_guard lock(this->eventsMutex);
+
+            std::swap(processing, this->events);
+            this->newEvents = false;
+        }
+
+        while (!processing.empty())
+        {
+            auto event = processing.front();
+            processing.pop();
 
             auto previous = navigation.empty() ? nullptr : navigation.back();
 
@@ -146,21 +155,21 @@ void CAppManager::work()
 
             case ActivateDefaultApp:
                 ESP_LOGD(TAG, "Default app activated, cleaning navigation history.");
-                navigation = IAppList();
+                navigation = NavigationList();
 
                 // We fall through to app activation
                 [[fallthrough]];
 
             case ActivateApp:
                 navigation.push_back(event.targetApp);
-                this->switchApp(previous, event.targetApp);
+                CAppManager::switchApp(previous, event.targetApp);
                 break;
 
             case PreviousApp:
                 if (navigation.size() > 1)
                 {
                     navigation.pop_back();
-                    this->switchApp(previous, navigation.back());
+                    CAppManager::switchApp(previous, navigation.back());
                 }
                 break;
             }
@@ -176,7 +185,9 @@ void CAppManager::sendEvent(CAppManager::EventType eventType, CBaseApp *targetAp
         this->events.push(CEvent{.eventType = eventType, .targetApp = targetApp});
     }
 
-    this->eventsSignal.notify_all();
+    ESP_LOGV(TAG, "Notifying main thread");
+    this->newEvents = true;
+    this->newEvents.notify_all();
 }
 
 void CAppManager::switchApp(CBaseApp *from, CBaseApp *to)

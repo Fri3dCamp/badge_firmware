@@ -1,6 +1,6 @@
 #pragma once
 
-#include <condition_variable>
+#include <atomic>
 #include <mutex>
 #include <queue>
 #include <thread>
@@ -13,11 +13,13 @@ namespace Fri3d::Application
 class CAppManager : public IAppManager
 {
 private:
+    typedef std::vector<CBaseApp *> NavigationList;
+
     IAppList apps;
     CBaseApp *defaultApp;
 
     CBaseApp *checkApp(const CBaseApp &app);
-    void switchApp(CBaseApp *from, CBaseApp *to);
+    static void switchApp(CBaseApp *from, CBaseApp *to);
 
     enum EventType
     {
@@ -36,7 +38,7 @@ private:
     typedef std::queue<CEvent> CEvents;
     CEvents events;
     std::mutex eventsMutex;
-    std::condition_variable eventsSignal;
+    std::atomic<bool> newEvents;
     void sendEvent(EventType eventType, CBaseApp *targetApp);
 
     std::thread worker;
