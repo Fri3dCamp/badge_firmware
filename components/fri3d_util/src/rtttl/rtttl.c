@@ -219,8 +219,6 @@ void vTaskCode(void *pvParameters)
 // Function that creates a task.
 void play_rtttl_task(const char *song, uint8_t volume)
 {
-    // 10ms seems enough
-    vTaskDelay(10 / portTICK_PERIOD_MS);
     static rtttl_task_parameter_t task_parameter;
     task_parameter.song = song;
     task_parameter.volume = volume;
@@ -235,9 +233,6 @@ void play_rtttl_task(const char *song, uint8_t volume)
         &xHandle,
         0);
     configASSERT(xHandle);
-
-    // 10ms seems enough
-    vTaskDelay(10 / portTICK_PERIOD_MS);
 }
 
 esp_err_t play_rtttl(const char *song, uint8_t volume)
