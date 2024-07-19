@@ -1,5 +1,5 @@
 
-#include "fri3d_bsp/button_custom.h"
+#include "fri3d_private/button_custom.h"
 #include "driver/gpio.h"
 #include "esp_log.h"
 
@@ -48,8 +48,9 @@ esp_err_t bsp_button_custom_init(void *param)
     if (config->enable_power_save)
     {
         /* Enable wake up from GPIO */
-        esp_err_t ret = gpio_wakeup_enable(config->gpio_num,
-                                           config->active_level == 0 ? GPIO_INTR_LOW_LEVEL : GPIO_INTR_HIGH_LEVEL);
+        esp_err_t ret = gpio_wakeup_enable(
+            config->gpio_num,
+            config->active_level == 0 ? GPIO_INTR_LOW_LEVEL : GPIO_INTR_HIGH_LEVEL);
         GPIO_BTN_CHECK(ret == ESP_OK, "Enable gpio wakeup failed", ESP_FAIL);
         ret = esp_sleep_enable_gpio_wakeup();
         GPIO_BTN_CHECK(ret == ESP_OK, "Configure gpio as wakeup source failed", ESP_FAIL);

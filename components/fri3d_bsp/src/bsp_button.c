@@ -1,6 +1,9 @@
 #include "esp_log.h"
-#include "fri3d_bsp/bsp.h"
 #include "iot_button.h"
+
+#include "fri3d_bsp/bsp.h"
+
+#include "fri3d_private/button_custom.h"
 
 static const char *TAG = "fri3d_bsp_button";
 

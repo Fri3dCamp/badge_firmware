@@ -1,6 +1,5 @@
 #pragma once
 
-#include "button_custom.h"
 #include "iot_button.h"
 
 #ifdef __cplusplus
