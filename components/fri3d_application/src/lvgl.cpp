@@ -127,12 +127,16 @@ void CLVGL::init()
     lv_display_set_theme(this->lv_display, theme);
 
     lv_unlock();
+
+    this->indev.init();
 }
 
 void CLVGL::deinit()
 {
     if (lv_is_initialized())
     {
+        this->indev.deinit();
+
         lv_deinit();
         lv_os_deinit();
     }

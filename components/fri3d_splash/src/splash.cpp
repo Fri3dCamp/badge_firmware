@@ -104,8 +104,10 @@ void CSplash::work() const
         std::this_thread::sleep_for(3s - length);
     }
 
+    lv_lock();
     lv_anim_delete(&a, reinterpret_cast<lv_anim_exec_xcb_t>(lv_obj_set_y));
     lv_obj_delete(label);
+    lv_unlock();
 
     ESP_ERROR_CHECK(led_indicator_set_on_off(leds[0], false));
     ESP_ERROR_CHECK(led_indicator_delete(leds[0]));

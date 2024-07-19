@@ -23,14 +23,46 @@
 #define BSP_LED_NUM            (5)
 
 /* Buttons */
-#define BSP_BUTTON_BOOT_IO     (GPIO_NUM_0)
+#define BSP_BUTTON_A_IO        (GPIO_NUM_13)
+#define BSP_BUTTON_B_IO        (GPIO_NUM_12)
+#define BSP_BUTTON_START_IO    (GPIO_NUM_32)
+#define BSP_BUTTON_SELECT_IO   (GPIO_NUM_36)
+#define BSP_BUTTON_P0_IO       (GPIO_NUM_27)
+#define BSP_BUTTON_P1_IO       (GPIO_NUM_14)
+#define BSP_BUTTON_UP_IO       (GPIO_NUM_39)
+#define BSP_BUTTON_LEFT_IO     (GPIO_NUM_26)
+#define BSP_BUTTON_DOWN_IO     (GPIO_NUM_15)
+#define BSP_BUTTON_RIGHT_IO    (GPIO_NUM_0)
+#define BSP_BUTTON_P3_IO       (GPIO_NUM_34)
 
 /* Buttons */
 typedef enum
 {
-    BSP_BUTTON_BOOT = 0,
+    BSP_BUTTON_A = 0,
+    BSP_BUTTON_B,
+    BSP_BUTTON_START,
+    BSP_BUTTON_SELECT,
+    BSP_BUTTON_P0,
+    BSP_BUTTON_P1,
+    BSP_BUTTON_UP,
+    BSP_BUTTON_LEFT,
+    BSP_BUTTON_DOWN,
+    BSP_BUTTON_RIGHT,
+    BSP_BUTTON_P3,
     BSP_BUTTON_NUM
 } bsp_button_t;
+
+/* Button mappings */
+#define BSP_KEY_ENTER      BSP_BUTTON_A
+#define BSP_KEY_ESC        BSP_BUTTON_B
+#define BSP_KEY_NEXT       BSP_BUTTON_P1
+#define BSP_KEY_PREV       BSP_BUTTON_P0
+#define BSP_KEY_HOME       BSP_BUTTON_SELECT
+#define BSP_KEY_END        BSP_BUTTON_START
+#define BSP_KEY_UP         BSP_BUTTON_UP
+#define BSP_KEY_LEFT       BSP_BUTTON_LEFT
+#define BSP_KEY_DOWN       BSP_BUTTON_DOWN
+#define BSP_KEY_RIGHT      BSP_BUTTON_RIGHT
 
 /* Buzzer */
 #define BSP_BUZZER_GPIO    (GPIO_NUM_32)

@@ -6,6 +6,7 @@
 #include "lvgl.h"
 
 #include "fri3d_bsp/bsp_display.h"
+#include "fri3d_private/indev.hpp"
 
 namespace Fri3d::Application
 {
@@ -13,6 +14,8 @@ namespace Fri3d::Application
 class CLVGL
 {
 private:
+    CIndev indev;
+
     lv_color_t *buf1;
     lv_color_t *buf2;
 

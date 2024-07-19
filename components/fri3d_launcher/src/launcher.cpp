@@ -11,7 +11,9 @@ namespace Fri3d::Apps::Launcher
 static const char *TAG = "Fri3d::Apps::Launcher::CLauncher";
 
 CLauncher::CLauncher()
-    : splashShown(false)
+    : button1(-20)
+    , button2(20)
+    , splashShown(false)
 {
     esp_log_level_set(TAG, static_cast<esp_log_level_t>(LOG_LOCAL_LEVEL));
 }
@@ -33,8 +35,6 @@ const char *CLauncher::getName() const
 
 void CLauncher::activate()
 {
-    ESP_LOGD(TAG, "Activated");
-
     ESP_LOGD(TAG, "Fetching registered apps");
     const auto &apps = this->getAppManager().getApps();
 
@@ -43,7 +43,7 @@ void CLauncher::activate()
 
     for (auto app : apps)
     {
-        if (std::strcmp(app->getName(), "Splash") == 0)
+        if (!this->splashShown && std::strcmp(app->getName(), "Splash") == 0)
         {
             splash = app;
         }
@@ -60,13 +60,30 @@ void CLauncher::activate()
             this->getAppManager().activateApp(*splash);
             return;
         }
-        ESP_LOGI(TAG, "TEST");
     }
+    else
+    {
+        this->show();
+    }
+    ESP_LOGD(TAG, "Activated");
 }
 
 void CLauncher::deactivate()
 {
+    this->hide();
     ESP_LOGD(TAG, "Deactivated");
+}
+
+void CLauncher::show()
+{
+    this->button1.show();
+    this->button2.show();
+}
+
+void CLauncher::hide()
+{
+    this->button2.hide();
+    this->button1.hide();
 }
 
 static CLauncher launcher_impl;

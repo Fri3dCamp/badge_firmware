@@ -1,7 +1,7 @@
 #pragma once
 
 #include "fri3d_application/app.hpp"
-#include "lvgl.h"
+#include "fri3d_private/button.hpp"
 
 namespace Fri3d::Apps::Launcher
 {
@@ -9,9 +9,13 @@ namespace Fri3d::Apps::Launcher
 class CLauncher : public Application::CBaseApp
 {
 private:
-    lv_obj_t *label;
+    CButton button1;
+    CButton button2;
 
     bool splashShown;
+
+    void show();
+    void hide();
 
 public:
     CLauncher();
