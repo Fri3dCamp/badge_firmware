@@ -13,6 +13,8 @@ CIndev::CIndev()
     : indev(nullptr)
     , group(nullptr)
     , buttons()
+    , pressedButton(nullptr)
+    , pressedLast(nullptr)
 {
     esp_log_level_set(TAG, static_cast<esp_log_level_t>(LOG_LOCAL_LEVEL));
 }
@@ -59,9 +61,10 @@ void CIndev::deinit()
     }
 
     {
-        // Clear the event queue so no more references to buttons exist before we delete them
-        std::lock_guard lock(this->eventsMutex);
-        this->events = CEvents();
+        // Clear the buttons
+        std::lock_guard lock(this->pressMutex);
+        pressedButton = nullptr;
+        pressedLast = nullptr;
     }
 
     for (auto button : this->buttons)
@@ -84,45 +87,64 @@ void CIndev::readButtons(lv_indev_t *indev, lv_indev_data_t *data)
 {
     auto self = static_cast<CIndev *>(lv_indev_get_user_data(indev));
 
-    std::lock_guard lock(self->eventsMutex);
-    if (!self->events.empty())
+    // We only allow one button at a time
+    data->continue_reading = false;
+
+    std::lock_guard lock(self->pressMutex);
+
+    if (self->pressedLast == nullptr)
     {
-        auto event = self->events.front();
-        self->events.pop();
-
-        data->key = self->mapping[event.second];
-
-        if (event.first == EventType::ButtonPressed)
+        // No button was pressed last iteration and a button is pressed now
+        if (self->pressedButton != nullptr)
         {
+            self->pressedLast = self->pressedButton;
+
+            data->key = self->mapping[self->pressedLast];
             data->state = LV_INDEV_STATE_PRESSED;
+            ESP_LOGV(TAG, "readButtons: (button: %" PRIu32 ", PRESSED)", data->key);
+        }
+    }
+    else
+    {
+        if (self->pressedButton == self->pressedLast)
+        {
+            // The button is still pressed
+            data->key = self->mapping[self->pressedLast];
+            data->state = LV_INDEV_STATE_PRESSED;
+            ESP_LOGV(TAG, "readButtons: (button: %" PRIu32 ", PRESSED)", data->key);
         }
         else
         {
-            data->state = LV_INDEV_STATE_RELEASED;
-        }
+            // The button was released and possibly a new button has already been pressed
+            self->pressedLast = self->pressedButton;
 
-        data->continue_reading = !self->events.empty();
+            data->key = self->mapping[self->pressedLast];
+            data->state = LV_INDEV_STATE_RELEASED;
+            ESP_LOGV(TAG, "readButtons: (button: %" PRIu32 ", RELEASED)", data->key);
+        }
     }
 }
 
 void CIndev::buttonPressed(void *button, void *data)
 {
     auto self = static_cast<CIndev *>(data);
-    self->buttonEvent(EventType::ButtonPressed, button);
+    std::lock_guard lock(self->pressMutex);
+
+    if (self->pressedButton == nullptr)
+    {
+        self->pressedButton = button;
+    }
 }
 
 void CIndev::buttonReleased(void *button, void *data)
 {
     auto self = static_cast<CIndev *>(data);
-    self->buttonEvent(EventType::ButtonReleased, button);
-}
+    std::lock_guard lock(self->pressMutex);
 
-void CIndev::buttonEvent(CIndev::EventType eventType, button_handle_t button)
-{
-    ESP_LOGV(TAG, "Button event (eventType: %d, button: %p)", eventType, button);
-
-    std::lock_guard lock(this->eventsMutex);
-    this->events.emplace(eventType, button);
+    if (self->pressedButton == button)
+    {
+        self->pressedButton = nullptr;
+    }
 }
 
 _lv_key_t CIndev::keymap(bsp_button_t button)

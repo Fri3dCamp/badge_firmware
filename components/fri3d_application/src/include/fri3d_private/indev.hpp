@@ -2,7 +2,6 @@
 
 #include <map>
 #include <mutex>
-#include <queue>
 
 #include "lvgl.h"
 
@@ -24,18 +23,9 @@ private:
     button_handle_t buttons[BSP_BUTTON_NUM];
     CKeymap mapping;
 
-    enum EventType
-    {
-        ButtonPressed,
-        ButtonReleased,
-    };
-
-    typedef std::pair<EventType, button_handle_t> CEvent;
-    typedef std::queue<CEvent> CEvents;
-    CEvents events;
-    std::mutex eventsMutex;
-
-    void buttonEvent(EventType eventType, button_handle_t button);
+    button_handle_t pressedButton;
+    button_handle_t pressedLast;
+    std::mutex pressMutex;
 
     static void buttonPressed(void *button, void *data);
     static void buttonReleased(void *button, void *data);
