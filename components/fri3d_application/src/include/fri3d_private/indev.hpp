@@ -4,11 +4,11 @@
 
 #include "fri3d_bsp/bsp.h"
 
-#ifdef BSP_CAPS_BUTTONS
+#if BSP_CAPS_BUTTONS
 #include "fri3d_private/indev_buttons.hpp"
 #endif
 
-#ifdef BSP_CAPS_JOYSTICK
+#if BSP_CAPS_JOYSTICK
 #include "fri3d_private/indev_joystick.hpp"
 #endif
 
@@ -23,19 +23,19 @@ private:
 
     enum InputType
     {
-#ifdef BSP_CAPS_BUTTONS
+#if BSP_CAPS_BUTTONS
         Buttons,
 #endif
-#ifdef BSP_CAPS_JOYSTICK
+#if BSP_CAPS_JOYSTICK
         Joystick,
 #endif
         None
     };
 
-#ifdef BSP_CAPS_BUTTONS
+#if BSP_CAPS_BUTTONS
     CIndevButtons buttons;
 #endif
-#ifdef BSP_CAPS_JOYSTICK
+#if BSP_CAPS_JOYSTICK
     CIndevJoystick joystick;
 #endif
 
