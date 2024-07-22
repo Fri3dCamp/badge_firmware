@@ -1,7 +1,7 @@
 include(${CMAKE_BINARY_DIR}/../../../cmake/fri3d_component.cmake)
 
 set(SRCS
-        "src/rtttl/rtttl.c"
+        "src/fri3d_util.c"
 )
 
 set(DEPS
@@ -11,6 +11,12 @@ set(DEPS
 set(PRIV_DEPS
         ""
 )
+
+if (CONFIG_FRI3D_BUZZER)
+    list(APPEND SRCS
+        "src/rtttl/rtttl.c"
+    )
+endif ()
 
 idf_component_register(
         SRCS

@@ -34,12 +34,18 @@ menu "Fri3d Firmware"
         bool "Use Joystick"
         default "n"
         help
-            Specify fri3d_application should build ADC joystick code. The joystick has to be configured by the BSP.
+            Specify fri3d_bsp should build ADC joystick code.
 
     config FRI3D_ADC
         bool "Use ADC"
         default "n"
         help
-            Specify fri3d_application should build ADC code. The ADC has to be configured by the BSP.
+            Specify fri3d_bsp should build ADC code.
+
+    config FRI3D_BUZZER
+        bool "Use Buzzer"
+        default "y"
+        help
+            Specify fri3d_bsp should build buzzer code.
 
 endmenu

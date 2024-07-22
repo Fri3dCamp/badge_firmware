@@ -2,12 +2,17 @@ include(${CMAKE_BINARY_DIR}/../../../cmake/fri3d_component.cmake)
 
 set(SRCS
         "src/bsp_button.c"
-        "src/bsp_buzzer.c"
         "src/bsp_display.c"
         "src/bsp_led.c"
         "src/button_custom.c"
         "src/led_blink_defaults.c"
 )
+
+if (CONFIG_FRI3D_BUZZER)
+    list(APPEND SRCS
+        "src/bsp_buzzer.c"
+    )
+endif ()
 
 if (CONFIG_FRI3D_ADC)
     list(APPEND SRCS
