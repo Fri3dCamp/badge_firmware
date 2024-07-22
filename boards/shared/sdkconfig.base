@@ -1,0 +1,6 @@
+# TODO: we might want to make this build type dependent
+CONFIG_COMPILER_CXX_EXCEPTIONS=y
+
+# Increase stack size
+CONFIG_ESP_MAIN_TASK_STACK_SIZE=10000
+CONFIG_PTHREAD_TASK_STACK_SIZE_DEFAULT=10000
