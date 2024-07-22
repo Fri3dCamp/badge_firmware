@@ -4,6 +4,7 @@
 #include "fri3d_application/application.hpp"
 #include "fri3d_hello/hello.hpp"
 #include "fri3d_launcher/launcher.hpp"
+#include "fri3d_ota/ota.hpp"
 #include "fri3d_splash/splash.hpp"
 
 using namespace Fri3d::Application;
@@ -23,7 +24,7 @@ void app_main(void)
     // (for now) the order in which you register determines the display order in the launcher
     appManager.registerApp(Launcher::launcher);
     appManager.registerApp(Splash::splash);
-
+    appManager.registerApp(Ota::ota);
     appManager.registerApp(Hello::hello);
 
     application.run(Launcher::launcher);

@@ -7,6 +7,7 @@ set(SDKCONFIG_DEFAULTS
         ../shared/sdkconfig.240mhz
         ../shared/sdkconfig.flash.16mb
         ../shared/sdkconfig.spiram_quad
+        ../shared/sdkconfig.wifi
 
         ../shared/sdkconfig.lvgl
 

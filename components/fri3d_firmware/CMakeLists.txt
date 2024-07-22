@@ -9,6 +9,7 @@ set(PRIV_DEPS
         "fri3d_bsp"
         "fri3d_hello"
         "fri3d_launcher"
+        "fri3d_ota"
         "fri3d_splash"
         "fri3d_util"
 )
