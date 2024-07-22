@@ -1,11 +1,16 @@
 #pragma once
 
-#include <map>
-#include <mutex>
-
 #include "lvgl.h"
 
 #include "fri3d_bsp/bsp.h"
+
+#ifdef BSP_CAPS_BUTTONS
+#include "fri3d_private/indev_buttons.hpp"
+#endif
+
+#ifdef BSP_CAPS_JOYSTICK
+#include "fri3d_private/indev_joystick.hpp"
+#endif
 
 namespace Fri3d::Application
 {
@@ -16,20 +21,48 @@ private:
     lv_indev_t *indev;
     lv_group_t *group;
 
-    // Note: this function is quite heavy, only use it for initializing a lookup table
-    static _lv_key_t keymap(bsp_button_t button);
+    enum InputType
+    {
+#ifdef BSP_CAPS_BUTTONS
+        Buttons,
+#endif
+#ifdef BSP_CAPS_JOYSTICK
+        Joystick,
+#endif
+        None
+    };
 
-    typedef std::map<button_handle_t, _lv_key_t> CKeymap;
-    button_handle_t buttons[BSP_BUTTON_NUM];
-    CKeymap mapping;
+#ifdef BSP_CAPS_BUTTONS
+    CIndevButtons buttons;
+#endif
+#ifdef BSP_CAPS_JOYSTICK
+    CIndevJoystick joystick;
+#endif
 
-    button_handle_t pressedButton;
-    button_handle_t pressedLast;
-    std::mutex pressMutex;
+    InputType lastInput;
 
-    static void buttonPressed(void *button, void *data);
-    static void buttonReleased(void *button, void *data);
-    static void readButtons(lv_indev_t *indev, lv_indev_data_t *data);
+    static void readInputs(lv_indev_t *indev, lv_indev_data_t *data);
+
+    template <class T> bool readInputs(T &input, InputType inputType, lv_indev_data_t *data)
+    {
+        bool shouldReturn = false;
+
+        if (this->lastInput == InputType::None || this->lastInput == inputType)
+        {
+            if (input.readInputs(data))
+            {
+                this->lastInput = inputType;
+                shouldReturn = true;
+            }
+            else if (this->lastInput == inputType)
+            {
+                this->lastInput = InputType::None;
+                shouldReturn = true;
+            }
+        }
+
+        return shouldReturn;
+    }
 
 public:
     CIndev();

@@ -5,9 +5,11 @@
 #include "esp_lcd_types.h"
 
 // Capabilities
+#define BSP_CAPS_ADC           0
 #define BSP_CAPS_DISPLAY       1
 #define BSP_CAPS_TOUCH         0
 #define BSP_CAPS_BUTTONS       1
+#define BSP_CAPS_JOYSTICK      0
 #define BSP_CAPS_BUZZER        1
 #define BSP_CAPS_AUDIO         0
 #define BSP_CAPS_AUDIO_SPEAKER 0

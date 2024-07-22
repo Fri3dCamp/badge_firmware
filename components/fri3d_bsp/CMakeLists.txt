@@ -9,9 +9,25 @@ set(SRCS
         "src/led_blink_defaults.c"
 )
 
+if (CONFIG_FRI3D_ADC)
+    list(APPEND SRCS
+        "src/bsp_adc.c"
+        "src/adc_driver/adc_driver.c"
+    )
+endif ()
+
+if (CONFIG_FRI3D_JOYSTICK)
+    list(APPEND SRCS
+        "src/bsp_joystick.c"
+        "src/joystick_axis/joystick_axis.c"
+    )
+endif ()
+
 if (CONFIG_FRI3D_BADGE_FOX)
     list(APPEND SRCS
+            "src/boards/fox/bsp_adc.c"
             "src/boards/fox/bsp_button.c"
+            "src/boards/fox/bsp_joystick.c"
     )
 
 elseif (CONFIG_FRI3D_BADGE_OCTOPUS)
@@ -23,6 +39,7 @@ endif ()
 
 set(DEPS
         "driver"
+        "esp_adc"
         "esp_lcd"
 )
 

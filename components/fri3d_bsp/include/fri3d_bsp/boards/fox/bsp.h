@@ -3,11 +3,14 @@
 #include "driver/gpio.h"
 #include "driver/spi_common.h"
 #include "esp_lcd_types.h"
+#include "hal/adc_types.h"
 
 // Capabilities
+#define BSP_CAPS_ADC           1
 #define BSP_CAPS_DISPLAY       1
 #define BSP_CAPS_TOUCH         0
 #define BSP_CAPS_BUTTONS       1
+#define BSP_CAPS_JOYSTICK      1
 #define BSP_CAPS_BUZZER        1
 #define BSP_CAPS_AUDIO         0
 #define BSP_CAPS_AUDIO_SPEAKER 0
@@ -43,12 +46,37 @@ typedef enum
 } bsp_button_t;
 
 /* Button mappings */
-#define BSP_KEY_ENTER      BSP_BUTTON_A
-#define BSP_KEY_ESC        BSP_BUTTON_B
-#define BSP_KEY_NEXT       BSP_BUTTON_X
-#define BSP_KEY_PREV       BSP_BUTTON_Y
-#define BSP_KEY_HOME       BSP_BUTTON_MENU
-#define BSP_KEY_END        BSP_BUTTON_BOOT
+#define BSP_KEY_ENTER             BSP_BUTTON_A
+#define BSP_KEY_ESC               BSP_BUTTON_B
+#define BSP_KEY_NEXT              BSP_BUTTON_X
+#define BSP_KEY_PREV              BSP_BUTTON_Y
+#define BSP_KEY_HOME              BSP_BUTTON_MENU
+#define BSP_KEY_END               BSP_BUTTON_BOOT
+
+/* Joystick */
+#define BSP_JOYSTICK_AXIS_X_IO    (GPIO_NUM_1)
+#define BSP_JOYSTICK_AXIS_Y_IO    (GPIO_NUM_3)
+
+#define BSP_JOYSTICK_AXIS_X_ATTEN (ADC_ATTEN_DB_12)
+#define BSP_JOYSTICK_AXIS_Y_ATTEN (ADC_ATTEN_DB_12)
+
+/* Joystick axis */
+typedef enum
+{
+    BSP_JOYSTICK_AXIS_X = 0,
+    BSP_JOYSTICK_AXIS_Y,
+    BSP_JOYSTICK_AXIS_NUM
+} bsp_joystick_t;
+
+/* ADC */
+#define BSP_ADC_UNIT ADC_UNIT_1
+
+typedef enum
+{
+    BSP_ADC_CHANNEL_JOYSTICK_AXIS_X = 0,
+    BSP_ADC_CHANNEL_JOYSTICK_AXIS_Y,
+    BSP_ADC_CHANNEL_NUM
+} bsp_adc_channel_t;
 
 /* Buzzer */
 #define BSP_BUZZER_GPIO    (GPIO_NUM_46)

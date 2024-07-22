@@ -6,7 +6,14 @@ set(SRCS
         "src/application.cpp"
         "src/lvgl.cpp"
         "src/indev.cpp"
+        "src/indev_buttons.cpp"
 )
+
+if (CONFIG_FRI3D_JOYSTICK)
+    list(APPEND SRCS
+        "src/indev_joystick.cpp"
+    )
+endif ()
 
 set(DEPS
         ""
