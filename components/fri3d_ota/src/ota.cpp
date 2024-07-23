@@ -127,79 +127,25 @@ void COta::do_fetch_versions(void)
         vTaskDelay(500 / portTICK_PERIOD_MS);
     }
 
-    const cJSON *tree = cJSON_GetObjectItemCaseSensitive(this->version_task_parameters.json, "tree");
-    int tree_len = cJSON_GetArraySize(tree);
-    ESP_LOGI(TAG, "tree_len: %d", tree_len);
+    const cJSON *versions = this->version_task_parameters.json;
+    ESP_LOGI(TAG, "tree_len: %d", cJSON_GetArraySize(versions));
 
     this->available_versions = std::vector<ota_version_t>();
 
-    const char *board_name = COta::getBoardName();
-    char ota_part[strlen(board_name) + 6];
-    strcpy(ota_part, "ota/");
-    strcat(ota_part, board_name);
-    strcat(ota_part, "/");
-
     const cJSON *node;
-    cJSON_ArrayForEach(node, tree)
+    cJSON_ArrayForEach(node, versions)
     {
-        cJSON *type = cJSON_GetObjectItemCaseSensitive(node, "type");
-        if (strcmp(type->valuestring, "tree") == 0)
+        char *version = cJSON_GetObjectItemCaseSensitive(node, "version")->valuestring;
+        char *url = cJSON_GetObjectItemCaseSensitive(node, "url")->valuestring;
+
+        int size = -1;
+        cJSON *size_json = cJSON_GetObjectItemCaseSensitive(node, "size");
+        if (cJSON_IsNumber(size_json))
         {
-            cJSON *path = cJSON_GetObjectItemCaseSensitive(node, "path");
-            char *version;
-            int found = COta::path_to_version(path, ota_part, &version);
-            if (found > 0)
-            {
-                ota_version_t v = {version, std::vector<ota_file_t>()};
-                this->available_versions.push_back(v);
-            }
+            size = size_json->valueint;
         }
-        else if (strcmp(type->valuestring, "blob") == 0)
-        {
-            cJSON *path = cJSON_GetObjectItemCaseSensitive(node, "path");
-            char *version;
-            char *filename;
-            int found = COta::path_to_version_filename(path, ota_part, &version, &filename);
-
-            if (found > 0)
-            {
-                char *url = nullptr;
-                cJSON *url_json = cJSON_GetObjectItemCaseSensitive(node, "url");
-                if (cJSON_IsString(url_json))
-                {
-                    url = (char *)calloc(strlen(url_json->valuestring) + 1, sizeof(char));
-                    strcpy(url, url_json->valuestring);
-                }
-
-                int size = -1;
-                cJSON *size_json = cJSON_GetObjectItemCaseSensitive(node, "size");
-                if (cJSON_IsNumber(size_json))
-                {
-                    size = size_json->valueint;
-                }
-
-                ota_file_t f = {
-                    filename, // name
-                    url,      // url
-                    size      // size
-                };
-
-                // look up the version in the this->available_versions, search in reverse order
-                auto it = std::find_if(
-                    this->available_versions.rbegin(),
-                    this->available_versions.rend(),
-                    [version](const ota_version_t a) { return strcmp(a.version, version) == 0; });
-                if (it == this->available_versions.rend())
-                {
-                    ESP_LOGE(TAG, "Could not find in versions, version %s", version);
-                }
-                else
-                {
-                    it->files.push_back(f);
-                    // ESP_LOGD(TAG, "files.size: %" PRIu16, it->files.size());
-                }
-            }
-        }
+        ota_version_t v = {version, url, size};
+        this->available_versions.push_back(v);
     }
 
     // free the json memory that got allocated in http_get_versions_task
@@ -214,8 +160,8 @@ void COta::do_fetch_versions(void)
         [](const ota_version_t &a, const ota_version_t &b) {
             semver_t s_a = {};
             semver_t s_b = {};
-            int r_a = semver_parse(a.version, &s_a);
-            int r_b = semver_parse(b.version, &s_b);
+            int r_a = semver_parse(a.version.c_str(), &s_a);
+            int r_b = semver_parse(b.version.c_str(), &s_b);
             bool result = false;
             if (r_a == 0 && r_b == 0)
             {
@@ -230,7 +176,7 @@ void COta::do_fetch_versions(void)
     ESP_LOGI(TAG, "this->available_versions.size(): %" PRIu16, this->available_versions.size());
     for (size_t i = 0; i < this->available_versions.size(); i++)
     {
-        ESP_LOGI(TAG, "this->available_versions[%" PRIu16 "]: %s", i, this->available_versions[i].version);
+        ESP_LOGI(TAG, "this->available_versions[%" PRIu16 "]: %s", i, this->available_versions[i].version.c_str());
         this->drop_down_options += this->available_versions[i].version;
         if (i < this->available_versions.size() - 1)
             this->drop_down_options += "\n";
@@ -240,79 +186,6 @@ void COta::do_fetch_versions(void)
     this->screen_spinner_stop();
 
     this->screen_update_available_versions();
-}
-
-int COta::path_to_version(const cJSON *path, const char *ota_part, char **version)
-{
-    int found = 0;
-
-    if (path != NULL && cJSON_IsString(path))
-    {
-        // does path start with ota/{board_name}/
-        char *v = strstr(path->valuestring, ota_part);
-        if (v != NULL)
-        {
-            v += strlen(ota_part);
-            // no more "/"" in the string
-            if (strstr(v, "/") == NULL)
-            {
-                // v points to char* with the version string
-                // ESP_LOGD(TAG, "real version: %s", v);
-                *version = (char *)calloc(strlen(v) + 1, sizeof(char));
-                if (*version == NULL)
-                {
-                    ESP_LOGE(TAG, "failed allocating memory for version string");
-                }
-                else
-                {
-                    strcpy(*version, v);
-                    ESP_LOGD(TAG, "real version: %s, copy_version: %s", v, *version);
-                    found = 1;
-                }
-            }
-        }
-    }
-    return found;
-}
-
-int COta::path_to_version_filename(const cJSON *path, const char *ota_part, char **version, char **filename)
-{
-    int found = 0;
-
-    if (path != NULL && cJSON_IsString(path))
-    {
-        // ESP_LOGD(TAG, "parsing for filename path: %s", path->valuestring);
-
-        // does path start with ota/{board_name}/
-        char *v = strstr(path->valuestring, ota_part);
-        if (v != NULL)
-        {
-            v += strlen(ota_part);
-            // next "/"" in the string
-            char *f = strstr(v, "/");
-            // "/" found an no further
-            if (f != NULL && strstr(f + 1, "/") == NULL)
-            {
-                // v till f points to char* with the version string
-
-                // ESP_LOGD(TAG, "real version: %s", v);
-                *version = (char *)calloc(f - v + 1, sizeof(char));
-                *filename = (char *)calloc(strlen(f) + 1, sizeof(char));
-                if (*version == NULL || *filename == NULL)
-                {
-                    ESP_LOGE(TAG, "failed allocating memory for version or filename string");
-                }
-                else
-                {
-                    memcpy(*version, v, f - v);
-                    strcpy(*filename, f + 1);
-                    // ESP_LOGD(TAG, "path version: %s, path filename: %s", *version, *filename);
-                    found = 1;
-                }
-            }
-        }
-    }
-    return found;
 }
 
 void COta::do_upgrade()
@@ -338,22 +211,10 @@ void COta::do_upgrade()
      */
     esp_wifi_set_ps(WIFI_PS_NONE);
 
-    ESP_LOGD(TAG, "this->selected_version.version: %s", this->selected_version.version);
-    const char *upgrade_filename = "micropython.bin";
+    ESP_LOGD(TAG, "this->selected_version.version: %s", this->selected_version.version.c_str());
     this->upgrade_task_parameters = {};
-    auto it = std::find_if(
-        this->selected_version.files.begin(),
-        this->selected_version.files.end(),
-        [upgrade_filename](const ota_file_t a) { return strcmp(a.name, upgrade_filename) == 0; });
-    if (it == this->selected_version.files.end())
-    {
-        ESP_LOGE(TAG, "Could not find in versions, version %s", upgrade_filename);
-    }
-    else
-    {
-        this->upgrade_task_parameters.url = it->url;
-        this->upgrade_task_parameters.size = it->size;
-    }
+    this->upgrade_task_parameters.url = this->selected_version.url.c_str();
+    this->upgrade_task_parameters.size = this->selected_version.size;
 
     xTaskCreatePinnedToCore(
         &advanced_ota_example_task,

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <map>
+#include <string>
 #include <vector>
 
 #include "fri3d_application/app.hpp"
@@ -12,8 +13,9 @@ namespace Fri3d::Apps::Ota
 
 struct ota_version_t
 {
-    char *version;
-    std::vector<ota_file_t> files;
+    std::string version;
+    std::string url;
+    int size;
 };
 
 class COta : public Application::CBaseApp
