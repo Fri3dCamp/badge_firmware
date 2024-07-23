@@ -73,17 +73,28 @@ void COta::activate()
             this->do_upgrade();
             this->action = NoAction;
         }
+        else if (this->action == Cancel)
+        {
+            break;
+        }
         else
         {
             ESP_LOGE(TAG, "unkown action: %d", this->action);
         }
     }
+
+    this->getAppManager().previousApp();
 }
 
 void COta::deactivate()
 {
     ESP_LOGI(TAG, "Deactivated");
-    // TODO: free this->available_versions
+
+    lv_lock();
+    lv_obj_t *screen = lv_screen_active();
+    lv_obj_clean(screen);
+    this->label_error = nullptr;
+    lv_unlock();
 }
 
 void COta::do_fetch_versions(void)
@@ -241,6 +252,8 @@ const char *COta::getBoardName()
 void COta::callback_btn_cancel_click(lv_event_t *e)
 {
     ESP_LOGI(TAG, "Cancel button clicked");
+    COta *thiz = (COta *)lv_event_get_user_data(e);
+    thiz->action = Cancel;
 }
 
 void COta::callback_btn_check_click(lv_event_t *e)
@@ -356,6 +369,7 @@ void COta::screen_spinner_stop()
 {
     lv_lock();
     lv_obj_delete(this->cont_spinner);
+    this->cont_spinner = nullptr;
     lv_unlock();
 }
 
@@ -404,6 +418,7 @@ void COta::screen_update_available_versions()
     this->selected_version = this->available_versions[0];
 
     lv_obj_delete(this->btn_check);
+    this->btn_check = nullptr;
 
     lv_obj_t *btn_update = lv_button_create(this->cont_row);
     lv_obj_set_size(btn_update, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
