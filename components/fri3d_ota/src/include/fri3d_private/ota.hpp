@@ -26,6 +26,7 @@ private:
         NoAction,
         CheckOnline,
         Upgrade,
+        Cancel,
     };
 
     ActionType action;
