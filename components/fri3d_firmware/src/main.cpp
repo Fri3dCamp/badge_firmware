@@ -1,5 +1,5 @@
-#include "esp_lcd_panel_ops.h"
 #include "esp_log.h"
+#include "esp_ota_ops.h"
 
 #include "fri3d_application/application.hpp"
 #include "fri3d_application/partition_boot.hpp"
@@ -32,6 +32,8 @@ void app_main(void)
     appManager.registerApp(Hello::hello);
     appManager.registerApp(micropython);
     appManager.registerApp(retroGo);
+
+    ESP_ERROR_CHECK(esp_ota_mark_app_valid_cancel_rollback());
 
     application.run(Launcher::launcher);
 
