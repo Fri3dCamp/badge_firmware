@@ -2,7 +2,6 @@ include(${CMAKE_BINARY_DIR}/../../../cmake/fri3d_component.cmake)
 
 set(SRCS
         "src/launcher.cpp"
-        "src/button.cpp"
 )
 
 set(DEPS

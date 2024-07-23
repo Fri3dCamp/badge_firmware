@@ -3,21 +3,22 @@
 #include <mutex>
 #include <thread>
 
+#include "lvgl.h"
+
 #include "fri3d_application/app.hpp"
 
-namespace Fri3d::Apps::Splash
+namespace Fri3d::Apps::Hello
 {
 
-class CSplash : public Application::CBaseApp
+class CHello : public Application::CBaseApp
 {
 private:
-    std::thread worker;
-    std::mutex workerMutex;
-    bool running;
-    void work() const;
+    lv_obj_t *screen;
+
+    static void clickEvent(lv_event_t *event);
 
 public:
-    CSplash();
+    CHello();
 
     void init() override;
     void deinit() override;
@@ -29,4 +30,4 @@ public:
     void deactivate() override;
 };
 
-} // namespace Fri3d::Apps::Splash
+} // namespace Fri3d::Apps::Hello

@@ -52,6 +52,17 @@ public:
     [[nodiscard]] virtual const char *getName() const = 0;
 
     /**
+     * @brief determines visibility in launcher apps
+     *
+     * Note that launchers are not obligated to adhere to this
+     *
+     * @return
+     * - true app is visible
+     * - false app is not visible
+     */
+    [[nodiscard]] virtual bool getVisible() const = 0;
+
+    /**
      * @brief the app has been activated (brought to the foreground), it should start doing something.
      * Note that this function should return asap, any required processing should be done in a separate thread
      */

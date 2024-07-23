@@ -120,6 +120,11 @@ void CSplash::work() const
     this->getAppManager().previousApp();
 }
 
+bool CSplash::getVisible() const
+{
+    return false;
+}
+
 static CSplash splash_impl;
 Application::CBaseApp &splash = splash_impl;
 
