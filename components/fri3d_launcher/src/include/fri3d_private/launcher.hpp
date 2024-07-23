@@ -23,8 +23,8 @@ private:
 
     static const CBaseApp *findSplash(IAppList apps);
 
-    // As we need to pass multiple references to the buttons being clicked, we pair them together and keep references to
-    // them so we can clean them up when necessary
+    // As we need to pass multiple references to the buttons being clicked, we pair them together and keep
+    // references to them so we can clean them up when necessary
     typedef std::pair<Application::IAppManager &, const Application::CBaseApp *> CEventData;
     typedef std::list<CEventData> CAppsEventData;
     CAppsEventData eventData;

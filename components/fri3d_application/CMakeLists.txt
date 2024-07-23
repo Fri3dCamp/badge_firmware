@@ -7,6 +7,7 @@ set(SRCS
         "src/lvgl.cpp"
         "src/indev.cpp"
         "src/indev_buttons.cpp"
+        "src/partition_boot.cpp"
 )
 
 if (CONFIG_FRI3D_JOYSTICK)
@@ -21,6 +22,8 @@ set(DEPS
 
 set(PRIV_DEPS
         "fri3d_bsp"
+        "esp_partition"
+        "app_update"
 )
 
 idf_component_register(
