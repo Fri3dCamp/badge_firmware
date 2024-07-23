@@ -114,8 +114,10 @@ static void https_with_url(http_rest_recv_json_t *response_buffer)
     esp_http_client_handle_t client = esp_http_client_init(&config);
     ESP_ERROR_CHECK(esp_http_client_set_header(client, "Accept", "application/vnd.github+json"));
     #ifdef CONFIG_CHEOPS_FRI3D_OTA_ACCESS_TOKEN
+        ESP_LOGD(TAG, "adding header 'Authorization'");
         ESP_ERROR_CHECK(esp_http_client_set_header(client, "Authorization", CONFIG_CHEOPS_FRI3D_OTA_ACCESS_TOKEN));
     #endif
+    ESP_LOGD(TAG, "Request to %s", config.url);
     esp_err_t err = esp_http_client_perform(client);
 
         
@@ -129,6 +131,7 @@ static void https_with_url(http_rest_recv_json_t *response_buffer)
         if (http_rest_recv_buffer.status_code != 200)
         {
             ESP_LOGE(TAG, "HTTP GET request failed with status code: %d", http_rest_recv_buffer.status_code);
+            ESP_LOGE(TAG, "HTTP GET reesponse: %s", http_rest_recv_buffer.buffer);
         }
         else
         {
