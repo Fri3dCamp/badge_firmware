@@ -120,6 +120,7 @@ static void https_with_url(http_rest_recv_json_t *response_buffer)
     };
     esp_http_client_handle_t client = esp_http_client_init(&config);
     ESP_ERROR_CHECK(esp_http_client_set_header(client, "Accept", "application/vnd.github+json"));
+    ESP_LOGD(TAG, "Request to %s", config.url);
     esp_err_t err = esp_http_client_perform(client);
 
     if (err != ESP_OK)
@@ -132,6 +133,7 @@ static void https_with_url(http_rest_recv_json_t *response_buffer)
         if (http_rest_recv_buffer.status_code != 200)
         {
             ESP_LOGE(TAG, "HTTP GET request failed with status code: %d", http_rest_recv_buffer.status_code);
+            ESP_LOGE(TAG, "HTTP GET reesponse: %s", http_rest_recv_buffer.buffer);
         }
         else
         {
