@@ -5,6 +5,7 @@
 #include "fri3d_application/app_manager.hpp"
 #include "fri3d_bsp/bsp.h"
 #include "fri3d_private/splash.hpp"
+#include "fri3d_util/lvgl/animated_logo.h"
 
 #ifdef CONFIG_FRI3D_BUZZER
 #include "fri3d_util/rtttl/rtttl.h"
@@ -13,12 +14,15 @@
 
 using namespace std::literals;
 
+#define SPLASH_DURATION 8s
+
 namespace Fri3d::Apps::Splash
 {
 
 static const char *TAG = "Fri3d::Apps::Splash::CSplash";
 
 CSplash::CSplash()
+    : screen(nullptr)
 {
     esp_log_level_set(TAG, static_cast<esp_log_level_t>(LOG_LOCAL_LEVEL));
 }
@@ -26,11 +30,24 @@ CSplash::CSplash()
 void CSplash::init()
 {
     ESP_LOGI(TAG, "Initializing splash");
+    if (this->screen == nullptr)
+    {
+        lv_lock();
+        this->screen = lv_obj_create(nullptr);
+        lv_unlock();
+    }
 }
 
 void CSplash::deinit()
 {
     ESP_LOGI(TAG, "Deinitializing splash");
+    if (this->screen != nullptr)
+    {
+        lv_lock();
+        lv_obj_delete(this->screen);
+        this->screen = nullptr;
+        lv_unlock();
+    }
 }
 
 const char *CSplash::getName() const
@@ -74,44 +91,28 @@ void CSplash::work() const
 
     lv_lock();
 
-    auto screen = lv_screen_active();
+    auto logo =
+        fri3d_lv_animated_logo_create(this->screen, lv_obj_get_width(this->screen), lv_obj_get_height(this->screen));
+    lv_obj_center(logo);
 
-    auto label = lv_label_create(screen);
-
-    lv_label_set_text(label, "SPLASH SCREEN");
-    lv_obj_set_style_text_color(label, lv_color_hex(0xFFFFFF), LV_PART_MAIN);
-    lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
-
-    lv_anim_t a;
-    lv_anim_init(&a);
-    lv_anim_set_var(&a, label);
-    lv_anim_set_values(&a, 10, 50);
-    lv_anim_set_duration(&a, 1000);
-    lv_anim_set_playback_delay(&a, 100);
-    lv_anim_set_playback_duration(&a, 300);
-    lv_anim_set_repeat_delay(&a, 500);
-    lv_anim_set_repeat_count(&a, LV_ANIM_REPEAT_INFINITE);
-    lv_anim_set_path_cb(&a, lv_anim_path_ease_in_out);
-    lv_anim_set_exec_cb(&a, reinterpret_cast<lv_anim_exec_xcb_t>(lv_obj_set_y));
-    lv_anim_start(&a);
+    lv_screen_load(this->screen);
 
     lv_unlock();
 
     // We want the splash screen to display for at least 3 seconds, but longer if the song takes longer
     auto start = std::chrono::steady_clock::now();
 #ifdef CONFIG_FRI3D_BUZZER
-    play_rtttl(dump_dump_s, 20);
+//    play_rtttl(dump_dump_s, 20);
 #endif
     auto length = std::chrono::steady_clock::now() - start;
 
-    if (length < 3s)
+    if (length < SPLASH_DURATION)
     {
-        std::this_thread::sleep_for(3s - length);
+        std::this_thread::sleep_for(SPLASH_DURATION - length);
     }
 
     lv_lock();
-    lv_anim_delete(&a, reinterpret_cast<lv_anim_exec_xcb_t>(lv_obj_set_y));
-    lv_obj_delete(label);
+    lv_obj_clean(this->screen);
     lv_unlock();
 
     ESP_ERROR_CHECK(led_indicator_set_on_off(leds[0], false));

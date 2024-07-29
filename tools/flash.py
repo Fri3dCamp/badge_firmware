@@ -32,7 +32,7 @@ while True:
             seen_devices.append(port.serial_number)
 
             subprocess.Popen([
-                "esptool.py", "--chip", "esp32s3", "-p", port.device, "--before", "default_reset", "--after",
+                "esptool.py", "--chip", "esp32s3", "-b1500000", "-p", port.device, "--before", "default_reset", "--after",
                 "hard_reset",
                 "write_flash", "--erase-all", "--flash_mode", "dio", "--flash_freq", "80m", "--flash_size", "16MB",
                 "0x0", "images/bootloader.bin",

@@ -1,1 +1,10 @@
 CONFIG_LV_OS_PTHREAD=y
+
+# If you don't use this LVGL will reserve a 64k static block of memory on the stack, which you probably don't want
+CONFIG_LV_USE_CLIB_MALLOC=y
+
+# We don't need examples to be built
+CONFIG_LV_BUILD_EXAMPLES=n
+
+# Use Printf to output log (if enabled)
+CONFIG_LV_LOG_PRINTF=y
