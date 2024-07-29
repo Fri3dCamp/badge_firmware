@@ -2,6 +2,7 @@
 
 #include "fri3d_application/application.hpp"
 #include "fri3d_private/app_manager.hpp"
+#include "fri3d_private/hardware_manager.hpp"
 #include "fri3d_private/lvgl.hpp"
 
 namespace Fri3d::Application
@@ -14,6 +15,7 @@ private:
     bool initialized;
 
     CAppManager appManager;
+    CHardwareManager hardwareManager;
     CLVGL lvgl;
 
 public:

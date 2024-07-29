@@ -13,13 +13,15 @@ static const char *TAG = "Fri3d::Application::CAppManager";
 CAppManager::CAppManager()
     : defaultApp(nullptr)
     , newEvents(false)
+    , hardwareManager(nullptr)
 {
     esp_log_level_set(TAG, static_cast<esp_log_level_t>(LOG_LOCAL_LEVEL));
 }
 
-void CAppManager::init()
+void CAppManager::init(IHardwareManager &hardware)
 {
     ESP_LOGI(TAG, "Initializing");
+    this->hardwareManager = &hardware;
 }
 
 void CAppManager::deinit()
@@ -32,6 +34,8 @@ void CAppManager::deinit()
 
     ESP_LOGI(TAG, "Deinitializing");
     this->apps = std::vector<const CBaseApp *>();
+
+    this->hardwareManager = nullptr;
 }
 
 void CAppManager::registerApp(CBaseApp &app)
@@ -39,6 +43,8 @@ void CAppManager::registerApp(CBaseApp &app)
     ESP_LOGI(TAG, "Registering new app (%s)", app.getName());
 
     app.base->setAppManager(this);
+    app.base->setHardwareManager(this->hardwareManager);
+
     app.init();
 
     this->apps.push_back(&app);

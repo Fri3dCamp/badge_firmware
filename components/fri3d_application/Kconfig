@@ -1,0 +1,14 @@
+menu "Fri3d Application"
+    config FRI3D_DEFAULT_WIFI_SSID
+        string "Default Wi-Fi SSID"
+        default "fri3d-badge"
+        help
+            Set the default wifi SSID
+
+    config FRI3D_DEFAULT_WIFI_PASSWORD
+        string "Default Wi-Fi Password"
+        default "badge2024"
+        help
+            Set the default wifi password
+
+endmenu

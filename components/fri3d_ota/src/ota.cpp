@@ -11,16 +11,15 @@
 #include "esp_netif.h"
 #include "esp_ota_ops.h"
 #include "esp_wifi.h"
-#include "nvs.h"
-#include "nvs_flash.h"
 #include "sdkconfig.h"
 
 #include "fri3d_application/app_manager.hpp"
+#include "fri3d_application/hardware_wifi.hpp"
+
 #include "fri3d_private/h2non_semver.h"
 #include "fri3d_private/ota.hpp"
 #include "fri3d_private/ota_helper.h"
 #include "fri3d_private/version_helper.h"
-#include "fri3d_private/wifi_connect.h"
 
 namespace Fri3d::Apps::Ota
 {
@@ -101,17 +100,18 @@ void COta::do_fetch_versions(void)
 {
     this->screen_spinner_start("fetching versions...");
 
-    initialize_nvs();
+    Application::Hardware::IWifi &wifi = this->getHardwareManager().getWifi();
 
-    ESP_ERROR_CHECK(esp_netif_init());
-    ESP_ERROR_CHECK(esp_event_loop_create_default());
+    if (!wifi.getConnected())
+    {
+        wifi.connect();
+        ESP_LOGI(TAG, "Waiting on wifi to connect");
 
-    /* This helper function configures Wi-Fi or Ethernet, as selected in menuconfig.
-     * Read "Establishing Wi-Fi or Ethernet Connection" section in
-     * examples/protocols/README.md for more information about this function.
-     */
-    ESP_ERROR_CHECK(example_connect());
-    ESP_LOGI(TAG, "Connected to AP, begin http example");
+        if (!wifi.waitOnConnect(30s))
+        {
+            return;
+        }
+    }
 
     // this should exist while the task is running -> class member (or wait till the task is finished here)
     // the whole version_task_parameters struct is overkill now, because board_name is not used any more
@@ -203,8 +203,6 @@ void COta::do_upgrade()
 {
     this->screen_spinner_start("Upgrading...");
 
-    initialize_nvs();
-
     ESP_ERROR_CHECK(esp_netif_init());
     esp_err_t err = esp_event_loop_create_default();
     if (err != ESP_OK && err != ESP_ERR_INVALID_STATE)
@@ -213,14 +211,6 @@ void COta::do_upgrade()
     }
 
     ESP_ERROR_CHECK(esp_event_handler_register(ESP_HTTPS_OTA_EVENT, ESP_EVENT_ANY_ID, &event_handler, NULL));
-
-    // wifi should still be connected from fetch versions
-    // ESP_ERROR_CHECK(example_connect());
-
-    /* Ensure to disable any WiFi power save mode, this allows best throughput
-     * and hence timings for overall OTA operation.
-     */
-    esp_wifi_set_ps(WIFI_PS_NONE);
 
     ESP_LOGD(TAG, "this->selected_version.version: %s", this->selected_version.version.c_str());
     this->upgrade_task_parameters = {};

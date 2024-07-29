@@ -3,6 +3,8 @@
 #include <experimental/propagate_const>
 #include <memory>
 
+#include "fri3d_application/hardware_manager.hpp"
+
 // We include this here for convenience, as most apps will need it.
 #include "lvgl.hpp"
 
@@ -31,6 +33,13 @@ public:
      * @return the app manager instance
      */
     [[nodiscard]] IAppManager &getAppManager() const;
+
+    /**
+     * @brief access the Hardware Manager
+     *
+     * @return the hardware manager instance
+     */
+    [[nodiscard]] IHardwareManager &getHardwareManager() const;
 
     /**
      * @brief called upon registration in the app_manager, allows the app to do some initialization beforehand.

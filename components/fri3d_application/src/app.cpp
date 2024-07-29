@@ -27,9 +27,24 @@ IAppManager &CBaseApp::impl::getAppManager() const
     return *this->appManager;
 }
 
+void CBaseApp::impl::setHardwareManager(IHardwareManager *value)
+{
+    this->hardwareManager = value;
+}
+
+IHardwareManager &CBaseApp::impl::getHardwareManager() const
+{
+    return *this->hardwareManager;
+}
+
 IAppManager &CBaseApp::getAppManager() const
 {
     return this->base->getAppManager();
+}
+
+IHardwareManager &CBaseApp::getHardwareManager() const
+{
+    return this->base->getHardwareManager();
 }
 
 } // namespace Fri3d::Application

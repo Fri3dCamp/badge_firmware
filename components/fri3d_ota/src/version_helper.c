@@ -37,7 +37,6 @@
 #include "esp_http_client.h"
 
 #include "fri3d_private/h2non_semver.h"
-#include "fri3d_private/ota_wifi_secrets.h"
 #include "fri3d_private/version_helper.h"
 
 static const char *TAG = "version_helper";

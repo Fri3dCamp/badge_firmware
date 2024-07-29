@@ -27,8 +27,9 @@ void CApplication::init()
     }
 
     ESP_LOGI(TAG, "Initializing application");
+    this->hardwareManager.init();
     this->lvgl.init();
-    this->appManager.init();
+    this->appManager.init(this->hardwareManager);
 
     this->initialized = true;
 }
@@ -43,6 +44,7 @@ void CApplication::deinit()
 
     this->appManager.deinit();
     this->lvgl.deinit();
+    this->hardwareManager.deinit();
     ESP_LOGI(TAG, "Deinitializing application");
 
     this->initialized = false;

@@ -4,6 +4,8 @@ set(SRCS
         "src/app.cpp"
         "src/app_manager.cpp"
         "src/application.cpp"
+        "src/hardware_manager.cpp"
+        "src/hardware_wifi.cpp"
         "src/lvgl.cpp"
         "src/indev.cpp"
         "src/indev_buttons.cpp"
@@ -21,9 +23,10 @@ set(DEPS
 )
 
 set(PRIV_DEPS
-        "fri3d_bsp"
-        "esp_partition"
         "app_update"
+        "esp_partition"
+        "esp_wifi"
+        "fri3d_bsp"
 )
 
 idf_component_register(

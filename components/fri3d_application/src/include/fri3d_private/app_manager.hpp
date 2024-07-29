@@ -45,10 +45,13 @@ private:
     std::mutex workerMutex;
     void work();
 
+    // Pointers to other managers to store in the apps
+    IHardwareManager *hardwareManager;
+
 public:
     CAppManager();
 
-    void init();
+    void init(IHardwareManager &hardware);
     void deinit();
 
     void registerApp(CBaseApp &app) override;

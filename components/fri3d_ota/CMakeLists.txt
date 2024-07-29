@@ -2,7 +2,6 @@ include(${CMAKE_BINARY_DIR}/../../../cmake/fri3d_component.cmake)
 
 set(SRCS
         "src/ota.cpp"
-        "src/wifi_connect.c"
         "src/ota_helper.c"
         "src/version_helper.c"
         "src/h2non_semver.c"
