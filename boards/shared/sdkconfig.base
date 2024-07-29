@@ -7,3 +7,25 @@ CONFIG_PTHREAD_TASK_STACK_SIZE_DEFAULT=10000
 
 # Make sure recovery process works
 CONFIG_BOOTLOADER_APP_ROLLBACK_ENABLE=y
+
+# Optimize for performance
+CONFIG_COMPILER_OPTIMIZATION_PERF=y
+
+# Make the build reproducible
+CONFIG_APP_REPRODUCIBLE_BUILD=y
+
+# These make the image size smaller, not all of them are enabled as some are quite useful but if need be we can enable them
+# Remove assertion details, saves 60 kB
+# CONFIG_COMPILER_OPTIMIZATION_ASSERTIONS_SILENT=y
+
+# Remove messages in ESP_RETURN_ON and ESP_EXIT_ON macros, saves 30 kB
+# CONFIG_COMPILER_OPTIMIZATION_CHECKS_SILENT=y
+
+# Only applicable for ESP32, but saves some space
+CONFIG_ESP32_REV_MIN=y
+
+# Disable IPv6 stack, saves 25 kB
+CONFIG_LWIP_IPV6=n
+
+# Use nano formatting for printf(), saves 42 kB
+CONFIG_NEWLIB_NANO_FORMAT=y
