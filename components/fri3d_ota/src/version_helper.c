@@ -1,13 +1,5 @@
 #include "sdkconfig.h"
 
-#ifdef CONFIG_FRI3D_BADGE_FOX
-#define CONFIG_VERSIONS_URL "https://fri3d.be/firmware/firmware-fox.json"
-#endif
-
-#ifdef CONFIG_FRI3D_BADGE_OCTOPUS
-#define CONFIG_VERSIONS_URL "https://fri3d.be/firmware/firmware-octopus.json"
-#endif
-
 /* ESP HTTP Client Example
 
    This example code is in the Public Domain (or CC0 licensed, at your option.)
@@ -112,7 +104,7 @@ static void https_with_url(http_rest_recv_json_t *response_buffer)
     memset(&http_rest_recv_buffer, 0, sizeof(http_rest_recv_buffer_t));
 
     esp_http_client_config_t config = {
-        .url = CONFIG_VERSIONS_URL,
+        .url = CONFIG_FRI3D_VERSIONS_URL,
         .event_handler = _http_event_handler,
         .user_data = &http_rest_recv_buffer, // Pass address of local buffer to get response
         .crt_bundle_attach = esp_crt_bundle_attach,

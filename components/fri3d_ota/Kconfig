@@ -1,0 +1,6 @@
+menu "Fri3d OTA"
+    config FRI3D_VERSIONS_URL
+        string "URL to fetch updates from"
+        default ""
+
+endmenu

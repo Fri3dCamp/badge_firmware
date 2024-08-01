@@ -1,6 +1,7 @@
 # Platform configuration
 CONFIG_IDF_TARGET="esp32"
 CONFIG_FRI3D_BADGE_OCTOPUS=y
+CONFIG_FRI3D_VERSIONS_URL="https://fri3d.be/firmware/firmware-octopus.json"
 
 # Convenience for development
 # CONFIG_FRI3D_LOG_DEBUG=y
