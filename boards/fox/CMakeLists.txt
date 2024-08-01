@@ -15,4 +15,9 @@ set(SDKCONFIG_DEFAULTS
         sdkconfig.defaults
 )
 
+if (EXISTS "${CMAKE_CURRENT_LIST_DIR}/sdkconfig.local")
+    message("Found sdkconfig.local, adding")
+    list(APPEND SDKCONFIG_DEFAULTS "sdkconfig.local")
+endif ()
+
 project(fri3d_firmware_fox)

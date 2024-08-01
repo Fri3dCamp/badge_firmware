@@ -1,2 +1,3 @@
 /boards/*/build
 /boards/*/managed_components
+/boards/*/sdkconfig.local

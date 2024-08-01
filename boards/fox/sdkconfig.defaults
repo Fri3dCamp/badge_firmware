@@ -1,11 +1,17 @@
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# !!!                                                                                                   !!!
+# !!!                         !!! DO NOT ADD LOCAL CONFIGURATION TO THIS FILE !!!                       !!!
+# !!!                                                                                                   !!!
+# !!!                                                                                                   !!!
+# !!!   You can put testing configuration in `sdkconfig.local` and it will get picked up by `idf.py`.   !!!
+# !!!   This file should only contain badge-specific configuration parameters!                          !!!
+# !!!                                                                                                   !!!
+# !!!   This helps prevent accidental commits of testing configuration to Git as `sdkconfig.local` is   !!!
+# !!!   ignored in the .gitignore file.                                                                 !!!
+# !!!                                                                                                   !!!
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 # Platform configuration
 CONFIG_IDF_TARGET="esp32s3"
 CONFIG_FRI3D_BADGE_FOX=y
 CONFIG_FRI3D_VERSIONS_URL="https://fri3d.be/firmware/firmware-fox.json"
-
-# Convenience for development
-# CONFIG_FRI3D_LOG_DEBUG=y
-# CONFIG_FRI3D_LOG_VERBOSE=y
-# CONFIG_LV_USE_LOG=y
-# CONFIG_LV_LOG_LEVEL_INFO=y
-# CONFIG_COMPILER_OPTIMIZATION_DEBUG=y
