@@ -1,3 +1,6 @@
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+
 #include <stdexcept>
 
 #include "esp_lcd_panel_ops.h"
@@ -199,6 +202,10 @@ void CLVGL::stop()
 
 void CLVGL::work() const
 {
+    // We raise our priority for smoother drawing
+    // TODO: maybe put this together with thread creation in a CThreadManager?
+    vTaskPrioritySet(NULL, uxTaskPriorityGet(NULL) + 5);
+
     while (this->running)
     {
         // In LVGL 9.2 and above, the lock will be taken internally in lv_timer_handler() and should be removed here
