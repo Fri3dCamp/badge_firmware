@@ -46,10 +46,6 @@ private:
 
     static const char *getBoardName();
     void screen_initial_layout();
-    void screen_spinner_start(const char *label_text);
-    void screen_spinner_stop();
-    void screen_spinner_add_progress_bar_message(const char *progress_message);
-    void screen_spinner_set_progress_bar_value(int32_t value);
     void screen_update_available_versions();
     void screen_error_label_show(const char *);
     void screen_error_label_remove();
@@ -61,8 +57,6 @@ private:
 
     void do_fetch_versions(void);
     version_task_parameters_t version_task_parameters;
-    static int path_to_version(const cJSON *path, const char *ota_part, char **version);
-    static int path_to_version_filename(const cJSON *path, const char *ota_part, char **version, char **filename);
 
     upgrade_task_parameters_t upgrade_task_parameters;
     void do_upgrade();

@@ -2,6 +2,7 @@
 
 #include "esp_wifi.h"
 
+#include "fri3d_application/lvgl/wait_dialog.hpp"
 #include "fri3d_private/hardware_wifi.hpp"
 
 namespace Fri3d::Application::Hardware
@@ -105,7 +106,8 @@ void CWifi::deinit()
 
 bool CWifi::getConnected()
 {
-    return false;
+    std::lock_guard<std::mutex> lock(this->connectedMutex);
+    return this->connected;
 }
 
 void CWifi::eventHandler(void *arg, esp_event_base_t eventBase, int32_t eventID, void *eventData)
@@ -144,13 +146,33 @@ void CWifi::eventHandler(void *arg, esp_event_base_t eventBase, int32_t eventID,
     }
 }
 
-bool CWifi::waitOnConnect(std::chrono::seconds timeout)
+bool CWifi::waitOnConnect(std::chrono::seconds timeout, bool showDialog)
 {
-    std::unique_lock<std::mutex> lock(this->connectedMutex);
+    // We create a copy of the current connected state with a proper lock, so we know beforehand whether we need to
+    // create the WaitDialog or not.
+    bool result = this->getConnected();
 
-    connectedSignal.wait_for(lock, timeout, [this] { return this->connected; });
+    if (!result)
+    {
+        std::unique_lock<std::mutex> lock(this->connectedMutex);
+        LVGL::CWaitDialog dialog("Waiting for wifi to connect.");
 
-    return this->connected;
+        if (showDialog)
+        {
+            dialog.show();
+        }
+
+        connectedSignal.wait_for(lock, timeout, [this] { return this->connected; });
+
+        if (showDialog)
+        {
+            dialog.hide();
+        }
+
+        result = this->connected;
+    }
+
+    return result;
 }
 
 } // namespace Fri3d::Application::Hardware

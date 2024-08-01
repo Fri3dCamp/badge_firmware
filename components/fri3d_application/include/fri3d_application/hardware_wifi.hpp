@@ -28,7 +28,7 @@ public:
      *
      * @return bool to indicate the state
      */
-    virtual bool getConnected() = 0;
+    [[nodiscard]] virtual bool getConnected() = 0;
 
     /**
      * @brief wait until the wifi is connected or the timeout has occurred
@@ -36,7 +36,7 @@ public:
      * @param timeout timeout
      * @return bool to indicate if connected
      */
-    virtual bool waitOnConnect(std::chrono::seconds timeout) = 0;
+    virtual bool waitOnConnect(std::chrono::seconds timeout, bool showDialog) = 0;
 };
 
 } // namespace Fri3d::Application::Hardware

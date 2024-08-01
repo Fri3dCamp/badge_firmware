@@ -33,8 +33,8 @@ public:
     void connect() override;
     void disconnect() override;
 
-    bool getConnected() override;
-    bool waitOnConnect(std::chrono::seconds timeout) override;
+    [[nodiscard]] bool getConnected() override;
+    bool waitOnConnect(std::chrono::seconds timeout, bool showDialog) override;
 };
 
 } // namespace Fri3d::Application::Hardware

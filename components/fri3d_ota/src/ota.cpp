@@ -10,11 +10,11 @@
 #include "esp_log.h"
 #include "esp_netif.h"
 #include "esp_ota_ops.h"
-#include "esp_wifi.h"
 #include "sdkconfig.h"
 
 #include "fri3d_application/app_manager.hpp"
 #include "fri3d_application/hardware_wifi.hpp"
+#include "fri3d_application/lvgl/wait_dialog.hpp"
 
 #include "fri3d_private/h2non_semver.h"
 #include "fri3d_private/ota.hpp"
@@ -98,20 +98,20 @@ void COta::deactivate()
 
 void COta::do_fetch_versions(void)
 {
-    this->screen_spinner_start("fetching versions...");
-
     Application::Hardware::IWifi &wifi = this->getHardwareManager().getWifi();
 
     if (!wifi.getConnected())
     {
         wifi.connect();
-        ESP_LOGI(TAG, "Waiting on wifi to connect");
 
-        if (!wifi.waitOnConnect(30s))
+        if (!wifi.waitOnConnect(30s, true))
         {
             return;
         }
     }
+
+    Application::LVGL::CWaitDialog dialog("Fetching versions");
+    dialog.show();
 
     // this should exist while the task is running -> class member (or wait till the task is finished here)
     // the whole version_task_parameters struct is overkill now, because board_name is not used any more
@@ -137,6 +137,8 @@ void COta::do_fetch_versions(void)
     {
         vTaskDelay(500 / portTICK_PERIOD_MS);
     }
+
+    dialog.setStatus("Parsing version info");
 
     const cJSON *versions = this->version_task_parameters.json;
     ESP_LOGI(TAG, "tree_len: %d", cJSON_GetArraySize(versions));
@@ -194,21 +196,25 @@ void COta::do_fetch_versions(void)
     }
     ESP_LOGD(TAG, "drop_down_options: %s", this->drop_down_options.c_str());
 
-    this->screen_spinner_stop();
-
     this->screen_update_available_versions();
 }
 
 void COta::do_upgrade()
 {
-    this->screen_spinner_start("Upgrading...");
+    Application::Hardware::IWifi &wifi = this->getHardwareManager().getWifi();
 
-    ESP_ERROR_CHECK(esp_netif_init());
-    esp_err_t err = esp_event_loop_create_default();
-    if (err != ESP_OK && err != ESP_ERR_INVALID_STATE)
+    if (!wifi.getConnected())
     {
-        ESP_ERROR_CHECK(err);
+        wifi.connect();
+
+        if (!wifi.waitOnConnect(30s, true))
+        {
+            return;
+        }
     }
+
+    Application::LVGL::CWaitDialog dialog("Upgrading...");
+    dialog.show();
 
     ESP_ERROR_CHECK(esp_event_handler_register(ESP_HTTPS_OTA_EVENT, ESP_EVENT_ANY_ID, &event_handler, NULL));
 
@@ -217,14 +223,7 @@ void COta::do_upgrade()
     this->upgrade_task_parameters.url = this->selected_version.url.c_str();
     this->upgrade_task_parameters.size = this->selected_version.size;
 
-    xTaskCreatePinnedToCore(
-        &advanced_ota_example_task,
-        "advanced_ota_example_task",
-        1024 * 8,
-        &this->upgrade_task_parameters,
-        5,
-        NULL,
-        0);
+    advanced_ota_example_task(&this->upgrade_task_parameters);
 }
 
 const char *COta::getBoardName()
@@ -328,66 +327,6 @@ void COta::screen_initial_layout()
     lv_obj_set_style_bg_color(lbl_current_version, lv_theme_default_get()->color_secondary, LV_PART_MAIN);
     lv_obj_set_style_bg_opa(lbl_current_version, LV_OPA_COVER, LV_PART_MAIN);
 
-    lv_unlock();
-}
-
-void COta::screen_spinner_start(const char *label_text)
-{
-    lv_lock();
-
-    lv_obj_t *screen = lv_screen_active();
-    this->cont_spinner = lv_obj_create(screen);
-    lv_obj_set_size(this->cont_spinner, lv_obj_get_width(screen), lv_obj_get_height(screen));
-    lv_obj_center(this->cont_spinner);
-    lv_obj_set_style_bg_opa(this->cont_spinner, LV_OPA_COVER, LV_PART_MAIN);
-
-    int32_t size = std::min<int32_t>(lv_obj_get_width(screen) / 2, lv_obj_get_height(screen) / 2);
-
-    lv_obj_t *spinner = lv_spinner_create(this->cont_spinner);
-    lv_obj_set_size(spinner, size, size);
-    lv_obj_align(spinner, LV_ALIGN_CENTER, 0, -10);
-    lv_spinner_set_anim_params(spinner, 1000, 200);
-
-    this->spinner_label = lv_label_create(this->cont_spinner);
-    lv_label_set_text(this->spinner_label, label_text);
-    lv_obj_align(this->spinner_label, LV_ALIGN_BOTTOM_MID, 0, 0);
-
-    lv_unlock();
-}
-
-void COta::screen_spinner_stop()
-{
-    lv_lock();
-    lv_obj_delete(this->cont_spinner);
-    this->cont_spinner = nullptr;
-    lv_unlock();
-}
-
-void COta::screen_spinner_add_progress_bar_message(const char *progress_message)
-{
-    lv_lock();
-
-    lv_obj_t *screen = lv_screen_active();
-    this->progress_bar = lv_bar_create(this->cont_spinner);
-    lv_obj_set_size(this->progress_bar, lv_obj_get_width(screen) - 20, 20);
-    lv_obj_align_to(this->progress_bar, this->spinner_label, LV_ALIGN_OUT_TOP_MID, 0, -5);
-    lv_bar_set_value(this->progress_bar, 0, LV_ANIM_OFF);
-
-    lv_obj_t *progress_label = lv_label_create(this->cont_spinner);
-    lv_obj_align_to(progress_label, this->progress_bar, LV_ALIGN_OUT_TOP_MID, 0, -5);
-    lv_label_set_text(progress_label, progress_message);
-
-    lv_unlock();
-}
-
-void COta::screen_spinner_set_progress_bar_value(int32_t value)
-{
-    lv_lock();
-    if (value != lv_bar_get_value(this->progress_bar))
-    {
-        ESP_LOGD(TAG, "progress bar value: %" PRIi32 "", value);
-        lv_bar_set_value(this->progress_bar, value, LV_ANIM_OFF);
-    }
     lv_unlock();
 }
 
