@@ -14,21 +14,17 @@ CWifi::CWifi()
     : networkInterface(nullptr)
     , instanceAnyWifi(nullptr)
     , instanceGotIP(nullptr)
-    , wifiConfig({
-          .sta =
-              {.ssid = CONFIG_FRI3D_DEFAULT_WIFI_SSID,
-               .password = CONFIG_FRI3D_DEFAULT_WIFI_PASSWORD,
-               .scan_method = WIFI_ALL_CHANNEL_SCAN,
-               .sort_method = WIFI_CONNECT_AP_BY_SIGNAL,
-               .threshold =
-                   {
-                       .rssi = -127,
-                       .authmode = WIFI_AUTH_OPEN,
-                   }},
-      })
+    , wifiConfig({})
     , connected(false)
 {
     esp_log_level_set(TAG, static_cast<esp_log_level_t>(LOG_LOCAL_LEVEL));
+
+    memcpy(wifiConfig.sta.ssid, CONFIG_FRI3D_DEFAULT_WIFI_SSID, strlen(CONFIG_FRI3D_DEFAULT_WIFI_SSID));
+    memcpy(wifiConfig.sta.password, CONFIG_FRI3D_DEFAULT_WIFI_PASSWORD, strlen(CONFIG_FRI3D_DEFAULT_WIFI_PASSWORD));
+    wifiConfig.sta.scan_method = WIFI_ALL_CHANNEL_SCAN;
+    wifiConfig.sta.sort_method = WIFI_CONNECT_AP_BY_SIGNAL;
+    wifiConfig.sta.threshold.authmode = WIFI_AUTH_OPEN;
+    wifiConfig.sta.threshold.rssi = -127;
 }
 
 void CWifi::connect()
