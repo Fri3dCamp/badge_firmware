@@ -11,8 +11,8 @@ namespace Fri3d::Application
 static const char *TAG = "Fri3d::Application::CAppManager";
 
 CAppManager::CAppManager()
-    : defaultApp(nullptr)
-    , newEvents(false)
+    : CThread<AppManagerEvent>(TAG)
+    , defaultApp(nullptr)
     , hardwareManager(nullptr)
 {
     esp_log_level_set(TAG, static_cast<esp_log_level_t>(LOG_LOCAL_LEVEL));
@@ -80,7 +80,7 @@ void CAppManager::activateApp(const CBaseApp &app)
 {
     CBaseApp *ref = this->checkApp(app);
 
-    this->sendEvent(EventType::ActivateApp, ref);
+    this->sendEvent({AppManagerEvent::ActivateApp, ref});
 }
 
 void CAppManager::activateDefaultApp()
@@ -91,109 +91,12 @@ void CAppManager::activateDefaultApp()
         return;
     }
 
-    this->sendEvent(EventType::ActivateDefaultApp, this->defaultApp);
+    this->sendEvent({AppManagerEvent::ActivateDefaultApp, this->defaultApp});
 }
 
 void CAppManager::previousApp()
 {
-    this->sendEvent(EventType::PreviousApp, nullptr);
-}
-
-void CAppManager::start()
-{
-    std::lock_guard lock(this->workerMutex);
-    if (this->worker.joinable())
-    {
-        throw std::runtime_error("Already running");
-    }
-
-    // Make sure the event queue is empty before we start
-    this->events = CEvents();
-
-    this->worker = std::thread(&CAppManager::work, this);
-}
-
-void CAppManager::stop()
-{
-    std::lock_guard lock(this->workerMutex);
-    if (this->worker.joinable())
-    {
-        sendEvent(EventType::Shutdown, nullptr);
-        this->worker.join();
-        this->events = CEvents();
-    }
-}
-
-void CAppManager::work()
-{
-    bool running = true;
-    NavigationList navigation;
-    CEvents processing;
-
-    while (running)
-    {
-        ESP_LOGV(TAG, "Waiting on new events");
-        this->newEvents.wait(false);
-        {
-            ESP_LOGV(TAG, "New events received");
-            std::lock_guard lock(this->eventsMutex);
-
-            std::swap(processing, this->events);
-            this->newEvents = false;
-        }
-
-        while (!processing.empty())
-        {
-            auto event = processing.front();
-            processing.pop();
-
-            auto previous = navigation.empty() ? nullptr : navigation.back();
-
-            switch (event.eventType)
-            {
-            case EventType::Shutdown:
-                if (previous)
-                {
-                    previous->deactivate();
-                }
-                running = false;
-                break;
-
-            case ActivateDefaultApp:
-                ESP_LOGD(TAG, "Default app activated, cleaning navigation history.");
-                navigation = NavigationList();
-
-                // We fall through to app activation
-                [[fallthrough]];
-
-            case ActivateApp:
-                navigation.push_back(event.targetApp);
-                CAppManager::switchApp(previous, event.targetApp);
-                break;
-
-            case PreviousApp:
-                if (navigation.size() > 1)
-                {
-                    navigation.pop_back();
-                    CAppManager::switchApp(previous, navigation.back());
-                }
-                break;
-            }
-        }
-    }
-}
-
-void CAppManager::sendEvent(CAppManager::EventType eventType, CBaseApp *targetApp)
-{
-    ESP_LOGV(TAG, "Sending event (eventType: %d; targetApp: %p)", eventType, targetApp);
-    {
-        std::lock_guard lock(this->eventsMutex);
-        this->events.push(CEvent{.eventType = eventType, .targetApp = targetApp});
-    }
-
-    ESP_LOGV(TAG, "Notifying main thread");
-    this->newEvents = true;
-    this->newEvents.notify_all();
+    this->sendEvent({AppManagerEvent::PreviousApp, nullptr});
 }
 
 void CAppManager::switchApp(CBaseApp *from, CBaseApp *to)
@@ -206,6 +109,42 @@ void CAppManager::switchApp(CBaseApp *from, CBaseApp *to)
 
     ESP_LOGD(TAG, "Activating app (%s)", to->getName());
     to->activate();
+}
+
+void CAppManager::onEvent(const AppManagerEvent &event)
+{
+    ESP_LOGV(TAG, "Received event (eventType: %d, targetApp: %p)", event.eventType, event.targetApp);
+    auto previous = this->navigation.empty() ? nullptr : this->navigation.back();
+
+    switch (event.eventType)
+    {
+    case AppManagerEvent::Shutdown:
+        if (previous)
+        {
+            // If we are shutting down, make sure the last active app also shuts down properly
+            previous->deactivate();
+        }
+        break;
+    case AppManagerEvent::ActivateDefaultApp:
+        ESP_LOGD(TAG, "Default app activated, cleaning navigation history.");
+        this->navigation = NavigationList();
+
+        // We fall through to app activation
+        [[fallthrough]];
+
+    case AppManagerEvent::ActivateApp:
+        this->navigation.push_back(event.targetApp);
+        CAppManager::switchApp(previous, event.targetApp);
+        break;
+
+    case AppManagerEvent::PreviousApp:
+        if (this->navigation.size() > 1)
+        {
+            this->navigation.pop_back();
+            CAppManager::switchApp(previous, this->navigation.back());
+        }
+        break;
+    }
 }
 
 } // namespace Fri3d::Application

@@ -6,10 +6,10 @@ set(SRCS
         "src/application.cpp"
         "src/hardware_manager.cpp"
         "src/hardware_wifi.cpp"
-        "src/lvgl.cpp"
-        "src/lvgl/wait_dialog.cpp"
         "src/indev.cpp"
         "src/indev_buttons.cpp"
+        "src/lvgl.cpp"
+        "src/lvgl/wait_dialog.cpp"
         "src/partition_boot.cpp"
 )
 

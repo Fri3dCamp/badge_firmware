@@ -1,16 +1,23 @@
 #pragma once
 
-#include <atomic>
-#include <mutex>
-#include <queue>
-#include <thread>
-
 #include "fri3d_application/app_manager.hpp"
+#include "fri3d_application/thread.hpp"
 
 namespace Fri3d::Application
 {
 
-class CAppManager : public IAppManager
+// clang-format off
+EVENT_CREATE_START(AppManagerEvent)
+EVENT_CREATE_TYPES_START()
+    ActivateApp,
+    ActivateDefaultApp,
+    PreviousApp,
+EVENT_CREATE_TYPES_END()
+    CBaseApp *targetApp;
+EVENT_CREATE_END()
+// clang-format on
+
+class CAppManager : public CThread<AppManagerEvent>, public IAppManager
 {
 private:
     typedef std::vector<CBaseApp *> NavigationList;
@@ -21,32 +28,12 @@ private:
     CBaseApp *checkApp(const CBaseApp &app);
     static void switchApp(CBaseApp *from, CBaseApp *to);
 
-    enum EventType
-    {
-        Shutdown,
-        ActivateApp,
-        ActivateDefaultApp,
-        PreviousApp,
-    };
-
-    struct CEvent
-    {
-        EventType eventType;
-        CBaseApp *targetApp;
-    };
-
-    typedef std::queue<CEvent> CEvents;
-    CEvents events;
-    std::mutex eventsMutex;
-    std::atomic<bool> newEvents;
-    void sendEvent(EventType eventType, CBaseApp *targetApp);
-
-    std::thread worker;
-    std::mutex workerMutex;
-    void work();
-
     // Pointers to other managers to store in the apps
     IHardwareManager *hardwareManager;
+
+    void onEvent(const Fri3d::Application::AppManagerEvent &event) override;
+
+    NavigationList navigation;
 
 public:
     CAppManager();
@@ -61,9 +48,6 @@ public:
     void activateApp(const CBaseApp &app) override;
     void previousApp() override;
     void activateDefaultApp();
-
-    void start();
-    void stop();
 };
 
 } // namespace Fri3d::Application
