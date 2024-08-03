@@ -7,8 +7,8 @@
 
 // clang-format off
 #define EVENT_CREATE_START(name)    \
-    struct name                     \
-    {
+struct name                         \
+{
 
 #define EVENT_CREATE_TYPES_START()  \
     enum EventType                  \
@@ -21,7 +21,7 @@
     EventType eventType;
 
 #define EVENT_CREATE_END()          \
-    };
+};
 // clang-format on
 
 namespace Fri3d::Application

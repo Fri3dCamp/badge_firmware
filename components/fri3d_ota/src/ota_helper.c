@@ -54,20 +54,15 @@ void event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, voi
 
 #define CONFIG_EXAMPLE_OTA_RECV_TIMEOUT 5000
 
-void advanced_ota_example_task(void *pvParameters)
+void advanced_ota_example_task(const char *url, int size)
 {
     ESP_LOGI(TAG, "Starting Advanced OTA example");
-
-    upgrade_task_parameters_t *params = (upgrade_task_parameters_t *)pvParameters;
-
-    ESP_LOGI(TAG, "params->size: %d", params->size);
-    ESP_LOGI(TAG, "params->url: %s", params->url);
 
     int total = 0;
 
     esp_err_t ota_finish_err = ESP_OK;
     esp_http_client_config_t config = {
-        .url = params->url,
+        .url = url,
         // .cert_pem = (char *)server_cert_pem_start,
         .timeout_ms = CONFIG_EXAMPLE_OTA_RECV_TIMEOUT,
         .crt_bundle_attach = esp_crt_bundle_attach,
@@ -114,9 +109,9 @@ void advanced_ota_example_task(void *pvParameters)
     }
 
     total = esp_https_ota_get_image_size(https_ota_handle);
-    if (total != params->size)
+    if (total != size)
     {
-        ESP_LOGE(TAG, "http reported size: %d does not match %d", total, params->size);
+        ESP_LOGE(TAG, "http reported size: %d does not match %d", total, size);
     }
 
     while (1)

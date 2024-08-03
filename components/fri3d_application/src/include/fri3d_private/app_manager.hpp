@@ -31,7 +31,7 @@ private:
     // Pointers to other managers to store in the apps
     IHardwareManager *hardwareManager;
 
-    void onEvent(const Fri3d::Application::AppManagerEvent &event) override;
+    void onEvent(const AppManagerEvent &event) override;
 
     NavigationList navigation;
 

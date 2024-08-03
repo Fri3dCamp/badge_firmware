@@ -156,32 +156,14 @@ static void https_with_url(http_rest_recv_json_t *response_buffer)
     esp_http_client_cleanup(client);
 }
 
-void http_get_versions_task(void *pvParameters)
+cJSON *http_get_versions_task()
 {
     esp_log_level_set(TAG, LOG_LOCAL_LEVEL);
-
-    version_task_parameters_t *params = (version_task_parameters_t *)pvParameters;
-    // params->ota_versions;
-    ESP_LOGD(TAG, "board_name: %s", params->board_name);
 
     http_rest_recv_json_t response_buffer = {0};
     https_with_url(&response_buffer);
 
     ESP_LOGI(TAG, "response status code: %d", response_buffer.status_code);
 
-    // char *jsonString = cJSON_Print(response_buffer.json);
-    // ESP_LOGI(TAG, "Response: %s", jsonString);
-    // free(jsonString);
-
-    params->json = response_buffer.json;
-
-    // if (response_buffer.json != NULL)
-    // {
-    //     cJSON_Delete(response_buffer.json);
-    // }
-
-    ESP_LOGI(TAG, "Finish http_get_versions_task");
-
-    // uncomment this when it is a task again
-    vTaskDelete(NULL);
+    return response_buffer.json;
 }

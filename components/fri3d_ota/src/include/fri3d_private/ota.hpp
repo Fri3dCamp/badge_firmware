@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "fri3d_application/app.hpp"
+#include "fri3d_application/thread.hpp"
 #include "fri3d_private/ota_helper.h"
 #include "fri3d_private/version_helper.h"
 
@@ -18,47 +19,39 @@ struct ota_version_t
     int size;
 };
 
-class COta : public Application::CBaseApp
+// clang-format off
+EVENT_CREATE_START(OtaEvent)
+EVENT_CREATE_TYPES_START()
+    FetchVersions,
+    SelectedVersion,
+    Update,
+EVENT_CREATE_TYPES_END()
+EVENT_CREATE_END();
+// clang-format on
+
+class COta : public Application::CBaseApp, public Application::CThread<OtaEvent>
 {
 private:
-    enum ActionType
-    {
-        NoAction,
-        CheckOnline,
-        Upgrade,
-        Cancel,
-    };
+    const char *currentVersion;
+    lv_obj_t *screen;
 
-    ActionType action;
+    typedef std::vector<ota_version_t> CVersions;
+    CVersions versions;
+    ota_version_t selectedVersion;
 
-    lv_obj_t *btn_check;
-    lv_obj_t *cont_spinner;
-    lv_obj_t *spinner_label;
-    lv_obj_t *progress_bar;
-    lv_obj_t *cont_row;
-    lv_obj_t *cont_col;
-    lv_obj_t *label_error = nullptr;
+    void hide();
+    void showVersions();
 
-    const char *current_version;
+    static void onClickExit(lv_event_t *event);
+    static void onClickFetchVersions(lv_event_t *event);
+    static void onClickUpdate(lv_event_t *event);
+    static void onVersionChange(lv_event_t *event);
+
+    void onEvent(const OtaEvent &event) override;
+
     std::string drop_down_options; // all the options from available_versions concatenated with '\n' as separator
-    ota_version_t selected_version;
-    std::vector<ota_version_t> available_versions;
 
-    static const char *getBoardName();
-    void screen_initial_layout();
-    void screen_update_available_versions();
-    void screen_error_label_show(const char *);
-    void screen_error_label_remove();
-
-    static void callback_btn_cancel_click(lv_event_t *e);
-    static void callback_btn_check_click(lv_event_t *e);
-    static void callback_drop_down_change(lv_event_t *e);
-    static void callback_btn_update_click(lv_event_t *e);
-
-    void do_fetch_versions(void);
-    version_task_parameters_t version_task_parameters;
-
-    upgrade_task_parameters_t upgrade_task_parameters;
+    void do_fetch_versions();
     void do_upgrade();
 
 public:
