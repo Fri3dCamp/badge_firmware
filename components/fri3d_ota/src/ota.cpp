@@ -12,10 +12,8 @@
 #include "fri3d_application/hardware_wifi.hpp"
 #include "fri3d_application/lvgl/wait_dialog.hpp"
 
-#include "fri3d_private/h2non_semver.h"
 #include "fri3d_private/ota.hpp"
 #include "fri3d_private/ota_helper.h"
-#include "fri3d_private/version_helper.h"
 
 namespace Fri3d::Apps::Ota
 {
@@ -76,12 +74,10 @@ void COta::deactivate()
     this->hide();
     this->stop();
 
-    this->versions = CVersions();
-
     ESP_LOGI(TAG, "Deactivated");
 }
 
-void COta::do_fetch_versions()
+void COta::fetchVersions()
 {
     Application::Hardware::IWifi &wifi = this->getHardwareManager().getWifi();
 
@@ -95,53 +91,10 @@ void COta::do_fetch_versions()
         }
     }
 
-    Application::LVGL::CWaitDialog dialog("Fetching versions");
-    dialog.show();
-
-    cJSON *json = http_get_versions_task();
-
-    dialog.setStatus("Parsing version info");
-
-    ESP_LOGI(TAG, "tree_len: %d", cJSON_GetArraySize(json));
-
-    this->versions = std::vector<ota_version_t>();
-
-    const cJSON *node;
-    cJSON_ArrayForEach(node, json)
+    if (!this->fetcher.refresh())
     {
-        char *version = cJSON_GetObjectItemCaseSensitive(node, "version")->valuestring;
-        char *url = cJSON_GetObjectItemCaseSensitive(node, "url")->valuestring;
-
-        int size = -1;
-        cJSON *size_json = cJSON_GetObjectItemCaseSensitive(node, "size");
-        if (cJSON_IsNumber(size_json))
-        {
-            size = size_json->valueint;
-        }
-        ota_version_t v = {version, url, size};
-        this->versions.push_back(v);
-    }
-
-    // free the json memory that got allocated in http_get_versions_task
-    if (json != NULL)
-    {
-        cJSON_Delete(json);
-    }
-
-    std::sort(this->versions.begin(), this->versions.end(), [](const ota_version_t &a, const ota_version_t &b) {
-        semver_t s_a = {};
-        semver_t s_b = {};
-        int r_a = semver_parse(a.version.c_str(), &s_a);
-        int r_b = semver_parse(b.version.c_str(), &s_b);
-        bool result = false;
-        if (r_a == 0 && r_b == 0)
-        {
-            result = semver_compare(s_a, s_b) == 1;
-            semver_free(&s_a);
-            semver_free(&s_b);
-        }
-        return result;
-    });
+        ESP_LOGE(TAG, "Could not fetch versions.");
+    };
 }
 
 void COta::do_upgrade()
@@ -163,7 +116,7 @@ void COta::do_upgrade()
 
     ESP_ERROR_CHECK(esp_event_handler_register(ESP_HTTPS_OTA_EVENT, ESP_EVENT_ANY_ID, &event_handler, NULL));
 
-    ESP_LOGD(TAG, "this->selected_version.version: %s", this->selectedVersion.version.c_str());
+    ESP_LOGD(TAG, "this->selected_version.version: %s", this->selectedVersion.version.text.c_str());
 
     advanced_ota_example_task(this->selectedVersion.url.c_str(), this->selectedVersion.size);
 }
@@ -213,8 +166,10 @@ void COta::showVersions()
     lv_label_set_text(labelCurrentVersion, this->currentVersion);
     lv_obj_align_to(labelCurrentVersion, labelCurrentVersionTitle, LV_ALIGN_OUT_BOTTOM_MID, 0, 10);
 
+    auto &versions = this->fetcher.getVersions(false);
+
     // Available versions
-    if (this->versions.empty())
+    if (versions.empty())
     {
         auto buttonFetchVersions = lv_button_create(versionsContainer);
         lv_obj_set_width(buttonFetchVersions, LV_PCT(80));
@@ -234,14 +189,14 @@ void COta::showVersions()
         // Add options
         lv_dropdown_clear_options(dropDown);
 
-        for (const auto &version : this->versions)
+        for (const auto &version : versions)
         {
-            lv_dropdown_add_option(dropDown, version.version.c_str(), LV_DROPDOWN_POS_LAST);
+            lv_dropdown_add_option(dropDown, version.version.text.c_str(), LV_DROPDOWN_POS_LAST);
         }
 
         // Make sure the latest version is selected
         lv_dropdown_set_selected(dropDown, 0);
-        this->selectedVersion = this->versions[0];
+        this->selectedVersion = versions[0];
 
         // Update button
         auto buttonUpdate = lv_button_create(versionsContainer);
@@ -286,7 +241,7 @@ void COta::onEvent(const OtaEvent &event)
     case OtaEvent::Shutdown:
         break;
     case OtaEvent::FetchVersions:
-        this->do_fetch_versions();
+        this->fetchVersions();
         this->showVersions();
         break;
     case OtaEvent::SelectedVersion:
@@ -315,11 +270,12 @@ void COta::onVersionChange(lv_event_t *event)
 {
     auto self = static_cast<COta *>(lv_event_get_user_data(event));
     auto dropDown = static_cast<lv_obj_t *>(lv_event_get_target(event));
+    auto &versions = self->fetcher.getVersions(false);
 
     auto index = lv_dropdown_get_selected(dropDown);
     ESP_LOGI(TAG, "Selected version index: %lu", index);
 
-    self->selectedVersion = self->versions[index];
+    self->selectedVersion = versions[index];
 }
 
 static COta ota_impl;

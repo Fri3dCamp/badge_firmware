@@ -7,17 +7,10 @@
 #include "fri3d_application/app.hpp"
 #include "fri3d_application/thread.hpp"
 #include "fri3d_private/ota_helper.h"
-#include "fri3d_private/version_helper.h"
+#include "fri3d_private/version.hpp"
 
 namespace Fri3d::Apps::Ota
 {
-
-struct ota_version_t
-{
-    std::string version;
-    std::string url;
-    int size;
-};
 
 // clang-format off
 EVENT_CREATE_START(OtaEvent)
@@ -34,10 +27,8 @@ class COta : public Application::CBaseApp, public Application::CThread<OtaEvent>
 private:
     const char *currentVersion;
     lv_obj_t *screen;
-
-    typedef std::vector<ota_version_t> CVersions;
-    CVersions versions;
-    ota_version_t selectedVersion;
+    CVersionFetcher fetcher;
+    CFirmwareVersion selectedVersion;
 
     void hide();
     void showVersions();
@@ -51,7 +42,7 @@ private:
 
     std::string drop_down_options; // all the options from available_versions concatenated with '\n' as separator
 
-    void do_fetch_versions();
+    void fetchVersions();
     void do_upgrade();
 
 public:

@@ -3,8 +3,6 @@
  *
  * Copyright (c) 2015-2017 Tomas Aparicio
  * MIT licensed
- * 
- * downloaded from https://github.com/h2non/semver.c
  */
 
 #ifndef __SEMVER_H
@@ -42,7 +40,6 @@ semver_satisfies_caret (semver_t x, semver_t y);
 
 int
 semver_satisfies_patch (semver_t x, semver_t y);
-
 
 int
 semver_compare (semver_t x, semver_t y);

@@ -3,15 +3,12 @@
  *
  * Copyright (c) 2015-2017 Tomas Aparicio
  * MIT licensed
- * 
- * downloaded from https://github.com/h2non/semver.c
- * 
  */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "fri3d_private/h2non_semver.h"
+#include "semver.h"
 
 #define SLICE_SIZE   50
 #define DELIMITER    "."
