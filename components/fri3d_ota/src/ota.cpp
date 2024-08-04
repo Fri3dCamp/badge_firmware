@@ -12,8 +12,8 @@
 #include "fri3d_application/hardware_wifi.hpp"
 #include "fri3d_application/lvgl/wait_dialog.hpp"
 
+#include "fri3d_private/flasher.hpp"
 #include "fri3d_private/ota.hpp"
-#include "fri3d_private/ota_helper.h"
 
 namespace Fri3d::Apps::Ota
 {
@@ -40,6 +40,9 @@ void COta::init()
         this->screen = lv_obj_create(nullptr);
         lv_unlock();
     }
+
+    // If we get here, enough of the system is initialized to persist the flash
+    CFlasher::persist();
 }
 
 void COta::deinit()
@@ -79,16 +82,9 @@ void COta::deactivate()
 
 void COta::fetchVersions()
 {
-    Application::Hardware::IWifi &wifi = this->getHardwareManager().getWifi();
-
-    if (!wifi.getConnected())
+    if (!this->ensureWifi())
     {
-        wifi.connect();
-
-        if (!wifi.waitOnConnect(30s, true))
-        {
-            return;
-        }
+        return;
     }
 
     if (!this->fetcher.refresh())
@@ -99,26 +95,15 @@ void COta::fetchVersions()
 
 void COta::do_upgrade()
 {
-    Application::Hardware::IWifi &wifi = this->getHardwareManager().getWifi();
-
-    if (!wifi.getConnected())
+    if (!this->ensureWifi())
     {
-        wifi.connect();
-
-        if (!wifi.waitOnConnect(30s, true))
-        {
-            return;
-        }
+        return;
     }
 
     Application::LVGL::CWaitDialog dialog("Upgrading...");
     dialog.show();
 
-    ESP_ERROR_CHECK(esp_event_handler_register(ESP_HTTPS_OTA_EVENT, ESP_EVENT_ANY_ID, &event_handler, NULL));
-
-    ESP_LOGD(TAG, "this->selected_version.version: %s", this->selectedVersion.version.text.c_str());
-
-    advanced_ota_example_task(this->selectedVersion.url.c_str(), this->selectedVersion.size);
+    CFlasher::flash(this->selectedVersion);
 }
 
 bool COta::getVisible() const
@@ -276,6 +261,25 @@ void COta::onVersionChange(lv_event_t *event)
     ESP_LOGI(TAG, "Selected version index: %lu", index);
 
     self->selectedVersion = versions[index];
+}
+
+bool COta::ensureWifi()
+{
+    Application::Hardware::IWifi &wifi = this->getHardwareManager().getWifi();
+
+    if (!wifi.getConnected())
+    {
+        wifi.connect();
+    }
+
+    bool result = wifi.waitOnConnect(30s, true);
+
+    if (!result)
+    {
+        ESP_LOGE(TAG, "No wifi connection");
+    }
+
+    return result;
 }
 
 static COta ota_impl;

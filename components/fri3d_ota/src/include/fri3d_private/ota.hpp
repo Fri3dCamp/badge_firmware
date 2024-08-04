@@ -6,7 +6,6 @@
 
 #include "fri3d_application/app.hpp"
 #include "fri3d_application/thread.hpp"
-#include "fri3d_private/ota_helper.h"
 #include "fri3d_private/version.hpp"
 
 namespace Fri3d::Apps::Ota
@@ -42,6 +41,7 @@ private:
 
     std::string drop_down_options; // all the options from available_versions concatenated with '\n' as separator
 
+    bool ensureWifi();
     void fetchVersions();
     void do_upgrade();
 

@@ -49,6 +49,7 @@ std::string CVersionFetcher::fetch()
     esp_http_client_config_t config({});
 
     config.url = CONFIG_FRI3D_VERSIONS_URL;
+    config.timeout_ms = 5000;
     config.user_data = &buffer;
     config.crt_bundle_attach = esp_crt_bundle_attach;
     config.event_handler = [](esp_http_client_event_t *event) -> esp_err_t {

@@ -1,8 +1,8 @@
 include(${CMAKE_BINARY_DIR}/../../../cmake/fri3d_component.cmake)
 
 set(SRCS
+        "src/flasher.cpp"
         "src/ota.cpp"
-        "src/ota_helper.c"
         "src/semver.c"
         "src/version.cpp"
 )
