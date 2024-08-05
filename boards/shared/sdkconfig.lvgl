@@ -8,3 +8,6 @@ CONFIG_LV_BUILD_EXAMPLES=n
 
 # Use Printf to output log (if enabled)
 CONFIG_LV_LOG_PRINTF=y
+
+# Who doesn't want to format floats?
+CONFIG_LV_USE_CLIB_SPRINTF=y

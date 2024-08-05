@@ -14,4 +14,4 @@
 # Platform configuration
 CONFIG_IDF_TARGET="esp32s3"
 CONFIG_FRI3D_BADGE_FOX=y
-CONFIG_FRI3D_VERSIONS_URL="https://fri3d.be/firmware/firmware-fox.json"
+CONFIG_FRI3D_VERSIONS_URL="https://fri3d.be/firmware/v01/firmware-fox.json"

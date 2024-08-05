@@ -8,6 +8,9 @@ CWaitDialog::CWaitDialog(const char *status)
     : text(status)
     , dialog(nullptr)
     , label(nullptr)
+    , spinnerContainer(nullptr)
+    , spinner(nullptr)
+    , progress(nullptr)
 {
 }
 
@@ -48,11 +51,15 @@ void CWaitDialog::show()
     lv_group_focus_obj(this->dialog);
     lv_group_focus_freeze(lv_group_get_default(), true);
 
-    // Create rest of widgets
-    auto spinner = lv_spinner_create(this->dialog);
-    lv_spinner_set_anim_params(spinner, 1000, 300);
-    lv_obj_set_size(spinner, 100, 100);
-    lv_obj_set_flex_grow(spinner, 1);
+    // Create a box for the spinner, so we can easily replace it in setProgress if needed
+    this->spinnerContainer = lv_obj_create(this->dialog);
+    lv_obj_remove_style_all(this->spinnerContainer);
+    lv_obj_set_flex_grow(this->spinnerContainer, 1);
+
+    this->spinner = lv_spinner_create(this->spinnerContainer);
+    lv_spinner_set_anim_params(this->spinner, 1000, 300);
+    lv_obj_set_size(this->spinner, 120, 120);
+    lv_obj_align(this->spinner, LV_ALIGN_TOP_MID, 0, 0);
 
     this->label = lv_label_create(this->dialog);
     lv_label_set_text(this->label, this->text);
@@ -70,6 +77,9 @@ void CWaitDialog::hide()
 
         this->dialog = nullptr;
         this->label = nullptr;
+        this->spinnerContainer = nullptr;
+        this->spinner = nullptr;
+        this->progress = nullptr;
 
         lv_unlock();
     }
@@ -78,6 +88,38 @@ void CWaitDialog::hide()
 CWaitDialog::~CWaitDialog()
 {
     this->hide();
+}
+
+void CWaitDialog::setProgress(float value)
+{
+    lv_lock();
+
+    if (this->spinner == nullptr)
+    {
+        return;
+    }
+
+    if (this->progress == nullptr)
+    {
+        // We haven't been called yet, replace the spinner and create the label
+        lv_obj_delete(this->spinner);
+        this->spinner = lv_arc_create(this->spinnerContainer);
+        lv_obj_set_size(this->spinner, 120, 120);
+        lv_obj_align(this->spinner, LV_ALIGN_TOP_MID, 0, 0);
+
+        lv_arc_set_rotation(this->spinner, 270);
+        lv_arc_set_bg_angles(this->spinner, 0, 360);
+        lv_obj_remove_style(this->spinner, nullptr, LV_PART_KNOB);
+        lv_obj_remove_flag(this->spinner, LV_OBJ_FLAG_CLICKABLE);
+
+        this->progress = lv_label_create(this->spinner);
+        lv_obj_center(this->progress);
+    }
+
+    lv_label_set_text_fmt(this->progress, "%03.2f %%", value);
+    lv_arc_set_value(this->spinner, static_cast<int32_t>(value));
+
+    lv_unlock();
 }
 
 } // namespace Fri3d::Application::LVGL

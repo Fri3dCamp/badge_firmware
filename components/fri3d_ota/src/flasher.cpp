@@ -4,7 +4,10 @@
 #include "esp_log.h"
 #include "esp_ota_ops.h"
 
+// Declare ESP-IDF internal structs
 #include "esp_https_ota_handle.h"
+
+#include "fri3d_application/lvgl/wait_dialog.hpp"
 #include "fri3d_private/flasher.hpp"
 
 namespace Fri3d::Apps::Ota
@@ -17,17 +20,19 @@ CFlasher::CFlasher()
     esp_log_level_set(TAG, static_cast<esp_log_level_t>(LOG_LOCAL_LEVEL));
 }
 
-void CFlasher::persist()
+std::string CFlasher::persist()
 {
     ESP_ERROR_CHECK(esp_ota_mark_app_valid_cancel_rollback());
+
+    return esp_ota_get_running_partition()->label;
 }
 
-bool CFlasher::flash(const CFirmwareVersion &image)
+bool CFlasher::flash(const CImage &image)
 {
     return CFlasher::flash(image, nullptr);
 }
 
-bool CFlasher::flash(const CFirmwareVersion &image, const char *partitionName)
+bool CFlasher::flash(const CImage &image, const char *partitionName)
 {
     const esp_partition_t *partition = nullptr;
     bool customPartition = partitionName != nullptr;
@@ -53,6 +58,11 @@ bool CFlasher::flash(const CFirmwareVersion &image, const char *partitionName)
     httpConfig.buffer_size_tx = 4096;
     httpConfig.buffer_size = 4096;
 
+    // Show a dialog
+    std::string dialogText = std::string("Flashing ") + CImage::typeToUIString.at(image.imageType) + "...";
+    Application::LVGL::CWaitDialog dialog(dialogText.c_str());
+    dialog.show();
+
     // Configure the OTA
     esp_https_ota_config_t otaConfig({});
     otaConfig.http_config = &httpConfig;
@@ -74,7 +84,12 @@ bool CFlasher::flash(const CFirmwareVersion &image, const char *partitionName)
     }
     else
     {
-        // No partition name was given, so we'd like to know where OTA will write to
+        // By default, IDF will switch to ota_2 after ota_1, which we don't want, so we reset it here
+        if (ota->update_partition->subtype > ESP_PARTITION_SUBTYPE_APP_OTA_1)
+        {
+            ota->update_partition =
+                esp_partition_find_first(ESP_PARTITION_TYPE_APP, ESP_PARTITION_SUBTYPE_APP_OTA_0, nullptr);
+        }
         partitionName = ota->update_partition->label;
     }
 
@@ -91,6 +106,7 @@ bool CFlasher::flash(const CFirmwareVersion &image, const char *partitionName)
         auto read = esp_https_ota_get_image_len_read(otaHandle);
         float progress = static_cast<float>(read) / static_cast<float>(total) * 100.0f;
         ESP_LOGI(TAG, "Image size: %d - bytes read: %d - progress: %03.2f", total, read, progress);
+        dialog.setProgress(progress);
     }
 
     if (!esp_https_ota_is_complete_data_received(otaHandle))
@@ -99,6 +115,8 @@ bool CFlasher::flash(const CFirmwareVersion &image, const char *partitionName)
         esp_https_ota_abort(otaHandle);
         return false;
     }
+
+    dialog.setProgress(100.0f);
 
     if (customPartition)
     {

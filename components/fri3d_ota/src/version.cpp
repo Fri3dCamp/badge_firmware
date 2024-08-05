@@ -1,139 +1,23 @@
-#include <algorithm>
+#include <cstring>
 
-#include "cJSON.h"
-#include "esp_crt_bundle.h"
-#include "esp_http_client.h"
 #include "esp_log.h"
 
-#include "fri3d_application/lvgl/wait_dialog.hpp"
 #include "fri3d_private/version.hpp"
 
 namespace Fri3d::Apps::Ota
 {
 
-static const char *TAG = "Fri3d::Apps::Ota::CVersionFetcher";
+static const char *TAG = "Fri3d::Apps::Ota::CVersion";
 
-CVersionFetcher::CVersionFetcher()
+CVersion::CVersion()
+    : CVersion("0.0.0")
 {
-    esp_log_level_set(TAG, static_cast<esp_log_level_t>(LOG_LOCAL_LEVEL));
 }
 
-bool CVersionFetcher::refresh()
+CVersion::CVersion(const CVersion &other)
+    : CVersion()
 {
-    Application::LVGL::CWaitDialog dialog("Fetching versions");
-    dialog.show();
-
-    this->versions = CVersions();
-
-    auto buffer = CVersionFetcher::fetch();
-
-    if (buffer.empty())
-    {
-        return false;
-    }
-
-    dialog.setStatus("Parsing version info");
-
-    if (!this->parse(buffer.c_str()))
-    {
-        this->versions = CVersions();
-    }
-
-    return !this->versions.empty();
-}
-
-std::string CVersionFetcher::fetch()
-{
-    std::string buffer;
-
-    esp_http_client_config_t config({});
-
-    config.url = CONFIG_FRI3D_VERSIONS_URL;
-    config.timeout_ms = 5000;
-    config.user_data = &buffer;
-    config.crt_bundle_attach = esp_crt_bundle_attach;
-    config.event_handler = [](esp_http_client_event_t *event) -> esp_err_t {
-        std::string &buffer = *static_cast<std::string *>(event->user_data);
-
-        switch (event->event_id)
-        {
-        case HTTP_EVENT_ERROR:
-            ESP_LOGW(TAG, "HTTP_EVENT_ERROR");
-            return ESP_FAIL;
-            break;
-        case HTTP_EVENT_ON_DATA:
-            ESP_LOGV(TAG, "Received %d bytes", event->data_len);
-            buffer.append(static_cast<const char *>(event->data), event->data_len);
-            break;
-        default:
-            break;
-        }
-        return ESP_OK;
-    };
-
-    esp_http_client_handle_t client = esp_http_client_init(&config);
-
-    if (ESP_OK != esp_http_client_set_header(client, "Accept", "application/json"))
-    {
-        ESP_LOGE(TAG, "Could not set headers");
-    }
-    else
-    {
-        ESP_LOGD(TAG, "Downloading from %s", config.url);
-        if (ESP_OK != esp_http_client_perform(client) || 200 != esp_http_client_get_status_code(client))
-        {
-            ESP_LOGE(TAG, "Could not download from %s", config.url);
-            buffer = std::string();
-        }
-    }
-
-    esp_http_client_cleanup(client);
-
-    return buffer;
-}
-
-const CVersions &CVersionFetcher::getVersions(bool beta) const
-{
-    return this->versions;
-}
-
-bool CVersionFetcher::parse(const char *json)
-{
-    cJSON *root = cJSON_Parse(json);
-
-    if (root == nullptr)
-    {
-        ESP_LOGE(TAG, "Could not parse JSON");
-        return false;
-    }
-
-    const cJSON *node;
-    cJSON_ArrayForEach(node, root)
-    {
-        const char *version = cJSON_GetObjectItemCaseSensitive(node, "version")->valuestring;
-        const char *url = cJSON_GetObjectItemCaseSensitive(node, "url")->valuestring;
-
-        int size = -1;
-        cJSON *size_json = cJSON_GetObjectItemCaseSensitive(node, "size");
-        if (cJSON_IsNumber(size_json))
-        {
-            size = size_json->valueint;
-        }
-
-        CFirmwareVersion v = {CVersion(version), url, size};
-        this->versions.push_back(v);
-    }
-
-    cJSON_Delete(root);
-
-    std::sort(this->versions.begin(), this->versions.end());
-
-    return true;
-}
-
-bool operator<(const CFirmwareVersion &l, const CFirmwareVersion &r)
-{
-    return l.version < r.version;
+    *this = other;
 }
 
 CVersion::CVersion(const char *version)
@@ -158,9 +42,40 @@ bool operator<(const CVersion &l, const CVersion &r)
     return semver_compare(l.semver, r.semver) == 1;
 }
 
-CVersion::CVersion()
-    : CVersion("0.0.0")
+CVersion &CVersion::operator=(const CVersion &other)
 {
+    if (this != &other)
+    {
+        this->text = other.text;
+
+        semver_free(&this->semver);
+
+        // There is no copy function for semver, so we do it ourselves
+        this->semver = other.semver;
+
+        if (other.semver.metadata != nullptr)
+        {
+            this->semver.metadata = static_cast<char *>(calloc(strlen(other.semver.metadata) + 1, sizeof(char *)));
+            strcpy(this->semver.metadata, other.semver.metadata);
+        }
+        if (other.semver.prerelease != nullptr)
+        {
+            this->semver.prerelease = static_cast<char *>(calloc(strlen(other.semver.prerelease) + 1, sizeof(char *)));
+            strcpy(this->semver.prerelease, other.semver.prerelease);
+        }
+    }
+
+    return *this;
+}
+
+CVersion &CVersion::operator=(CVersion &&other) noexcept
+{
+    this->text = std::move(other.text);
+
+    this->semver = other.semver;
+    other.semver = {};
+
+    return *this;
 }
 
 } // namespace Fri3d::Apps::Ota

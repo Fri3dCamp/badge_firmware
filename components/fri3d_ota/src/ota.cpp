@@ -1,16 +1,9 @@
-#include <algorithm>
-#include <cstring>
-#include <vector>
-
-#include "esp_event.h"
-#include "esp_https_ota.h"
 #include "esp_log.h"
-#include "esp_netif.h"
 #include "esp_ota_ops.h"
+#include "nvs_flash.h"
 
 #include "fri3d_application/app_manager.hpp"
 #include "fri3d_application/hardware_wifi.hpp"
-#include "fri3d_application/lvgl/wait_dialog.hpp"
 
 #include "fri3d_private/flasher.hpp"
 #include "fri3d_private/ota.hpp"
@@ -42,7 +35,25 @@ void COta::init()
     }
 
     // If we get here, enough of the system is initialized to persist the flash
-    CFlasher::persist();
+    auto running = CFlasher::persist();
+
+    // TODO: move this to a manager with proper initialization and error handling
+    ESP_ERROR_CHECK(nvs_flash_init());
+
+    esp_err_t err = nvs_flash_init();
+    if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND)
+    {
+        // NVS partition was truncated and needs to be erased
+        // Retry nvs_flash_init
+        ESP_ERROR_CHECK(nvs_flash_erase());
+        err = nvs_flash_init();
+    }
+    ESP_ERROR_CHECK(err);
+
+    nvs_handle_t nvs;
+    ESP_ERROR_CHECK(nvs_open("fri3d.sys", NVS_READWRITE, &nvs));
+    // We store the number in the name of the OTA partition because MicroPython can only read i32
+    ESP_ERROR_CHECK(nvs_set_i32(nvs, "boot_partition", running == "ota_0" ? 0 : 1));
 }
 
 void COta::deinit()
@@ -80,7 +91,7 @@ void COta::deactivate()
     ESP_LOGI(TAG, "Deactivated");
 }
 
-void COta::fetchVersions()
+void COta::fetchFirmwares()
 {
     if (!this->ensureWifi())
     {
@@ -93,17 +104,37 @@ void COta::fetchVersions()
     };
 }
 
-void COta::do_upgrade()
+void COta::updateFirmware()
 {
     if (!this->ensureWifi())
     {
         return;
     }
 
-    Application::LVGL::CWaitDialog dialog("Upgrading...");
-    dialog.show();
-
-    CFlasher::flash(this->selectedVersion);
+    for (const auto &item : this->selectedFirmware.images)
+    {
+        switch (item.first)
+        {
+        case CImage::Main:
+            CFlasher::flash(item.second);
+            break;
+        case CImage::MicroPython:
+            CFlasher::flash(item.second, "micropython");
+            break;
+        case CImage::RetroGoLauncher:
+            CFlasher::flash(item.second, "launcher");
+            break;
+        case CImage::RetroGoCore:
+            CFlasher::flash(item.second, "retro-core");
+            break;
+        case CImage::RetroGoPRBoom:
+            CFlasher::flash(item.second, "prboom-go");
+            break;
+        case CImage::VFS:
+            CFlasher::flash(item.second, "vfs");
+            break;
+        }
+    }
 }
 
 bool COta::getVisible() const
@@ -151,17 +182,17 @@ void COta::showVersions()
     lv_label_set_text(labelCurrentVersion, this->currentVersion);
     lv_obj_align_to(labelCurrentVersion, labelCurrentVersionTitle, LV_ALIGN_OUT_BOTTOM_MID, 0, 10);
 
-    auto &versions = this->fetcher.getVersions(false);
+    auto &firmwares = this->fetcher.getFirmwares(false);
 
     // Available versions
-    if (versions.empty())
+    if (firmwares.empty())
     {
         auto buttonFetchVersions = lv_button_create(versionsContainer);
         lv_obj_set_width(buttonFetchVersions, LV_PCT(80));
         lv_obj_add_event_cb(buttonFetchVersions, COta::onClickFetchVersions, LV_EVENT_CLICKED, this);
 
         auto labelFetchVersions = lv_label_create(buttonFetchVersions);
-        lv_label_set_text(labelFetchVersions, "Fetch versions");
+        lv_label_set_text(labelFetchVersions, "Fetch firmwares");
         lv_obj_center(labelFetchVersions);
     }
     else
@@ -174,14 +205,14 @@ void COta::showVersions()
         // Add options
         lv_dropdown_clear_options(dropDown);
 
-        for (const auto &version : versions)
+        for (const auto &version : firmwares)
         {
             lv_dropdown_add_option(dropDown, version.version.text.c_str(), LV_DROPDOWN_POS_LAST);
         }
 
         // Make sure the latest version is selected
         lv_dropdown_set_selected(dropDown, 0);
-        this->selectedVersion = versions[0];
+        this->selectedFirmware = firmwares[0];
 
         // Update button
         auto buttonUpdate = lv_button_create(versionsContainer);
@@ -225,14 +256,14 @@ void COta::onEvent(const OtaEvent &event)
     {
     case OtaEvent::Shutdown:
         break;
-    case OtaEvent::FetchVersions:
-        this->fetchVersions();
+    case OtaEvent::FetchFirmwares:
+        this->fetchFirmwares();
         this->showVersions();
         break;
-    case OtaEvent::SelectedVersion:
+    case OtaEvent::SelectedFirmware:
         break;
-    case OtaEvent::Update:
-        this->do_upgrade();
+    case OtaEvent::UpdateFirmware:
+        this->updateFirmware();
         break;
     }
 }
@@ -241,26 +272,26 @@ void COta::onClickFetchVersions(lv_event_t *event)
 {
     auto self = static_cast<COta *>(lv_event_get_user_data(event));
 
-    self->sendEvent({OtaEvent::FetchVersions});
+    self->sendEvent({OtaEvent::FetchFirmwares});
 }
 
 void COta::onClickUpdate(lv_event_t *event)
 {
     auto self = static_cast<COta *>(lv_event_get_user_data(event));
 
-    self->sendEvent({OtaEvent::Update});
+    self->sendEvent({OtaEvent::UpdateFirmware});
 }
 
 void COta::onVersionChange(lv_event_t *event)
 {
     auto self = static_cast<COta *>(lv_event_get_user_data(event));
     auto dropDown = static_cast<lv_obj_t *>(lv_event_get_target(event));
-    auto &versions = self->fetcher.getVersions(false);
+    auto &versions = self->fetcher.getFirmwares(false);
 
     auto index = lv_dropdown_get_selected(dropDown);
     ESP_LOGI(TAG, "Selected version index: %lu", index);
 
-    self->selectedVersion = versions[index];
+    self->selectedFirmware = versions[index];
 }
 
 bool COta::ensureWifi()

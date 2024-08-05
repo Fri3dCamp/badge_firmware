@@ -1,5 +1,6 @@
 #pragma once
 
+#include <map>
 #include <string>
 #include <vector>
 
@@ -15,35 +16,14 @@ struct CVersion
     semver_t semver;
 
     CVersion();
+    CVersion(const CVersion &other);
     explicit CVersion(const char *version);
+
     ~CVersion();
+
+    CVersion &operator=(const CVersion &other);
+    CVersion &operator=(CVersion &&other) noexcept;
     friend bool operator<(const CVersion &l, const CVersion &r);
-};
-
-struct CFirmwareVersion
-{
-    CVersion version;
-    std::string url;
-    int size;
-
-    friend bool operator<(const CFirmwareVersion &l, const CFirmwareVersion &r);
-};
-
-typedef std::vector<CFirmwareVersion> CVersions;
-
-class CVersionFetcher
-{
-private:
-    CVersions versions;
-
-    static std::string fetch();
-    bool parse(const char *json);
-
-public:
-    CVersionFetcher();
-
-    [[nodiscard]] bool refresh();
-    [[nodiscard]] const CVersions &getVersions(bool beta) const;
 };
 
 } // namespace Fri3d::Apps::Ota

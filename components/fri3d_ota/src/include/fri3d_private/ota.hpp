@@ -6,7 +6,7 @@
 
 #include "fri3d_application/app.hpp"
 #include "fri3d_application/thread.hpp"
-#include "fri3d_private/version.hpp"
+#include "fri3d_private/firmware_fetcher.hpp"
 
 namespace Fri3d::Apps::Ota
 {
@@ -14,9 +14,9 @@ namespace Fri3d::Apps::Ota
 // clang-format off
 EVENT_CREATE_START(OtaEvent)
 EVENT_CREATE_TYPES_START()
-    FetchVersions,
-    SelectedVersion,
-    Update,
+    FetchFirmwares,
+    SelectedFirmware,
+    UpdateFirmware,
 EVENT_CREATE_TYPES_END()
 EVENT_CREATE_END();
 // clang-format on
@@ -26,8 +26,8 @@ class COta : public Application::CBaseApp, public Application::CThread<OtaEvent>
 private:
     const char *currentVersion;
     lv_obj_t *screen;
-    CVersionFetcher fetcher;
-    CFirmwareVersion selectedVersion;
+    CFirmwareFetcher fetcher;
+    CFirmware selectedFirmware;
 
     void hide();
     void showVersions();
@@ -42,8 +42,8 @@ private:
     std::string drop_down_options; // all the options from available_versions concatenated with '\n' as separator
 
     bool ensureWifi();
-    void fetchVersions();
-    void do_upgrade();
+    void fetchFirmwares();
+    void updateFirmware();
 
 public:
     COta();

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "fri3d_private/version.hpp"
+#include "fri3d_private/firmware.hpp"
 
 namespace Fri3d::Apps::Ota
 {
@@ -12,8 +12,10 @@ public:
 
     /**
      * @brief persist the main firmware image after its first boot
+     *
+     * @returns name of the persisted partition
      */
-    static void persist();
+    static std::string persist();
 
     /**
      * @brief flash the image to one of the two main firmware partitions
@@ -21,7 +23,7 @@ public:
      *
      * @returns true on success
      */
-    static bool flash(const CFirmwareVersion &image);
+    static bool flash(const CImage &image);
 
     /**
      * @brief flash the image to the specified partition
@@ -30,7 +32,7 @@ public:
      *
      * @returns true on success
      */
-    static bool flash(const CFirmwareVersion &image, const char *partitionName);
+    static bool flash(const CImage &image, const char *partitionName);
 };
 
 } // namespace Fri3d::Apps::Ota
