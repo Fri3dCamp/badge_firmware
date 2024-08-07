@@ -11,16 +11,14 @@ set(SRCS
 
 set(DEPS
         "fri3d_application"
-        "esp_wifi"
+)
+
+set(PRIV_DEPS
         "esp_https_ota"
         "mbedtls"
         "esp-tls"
         "app_update"
         "json"
-)
-
-set(PRIV_DEPS
-        ""
 )
 
 idf_component_register(
