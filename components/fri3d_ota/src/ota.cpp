@@ -15,12 +15,13 @@ static const char *TAG = "Fri3d::Apps::Ota::COta";
 COta::COta()
     : Application::CThread<OtaEvent>(TAG)
     , screen(nullptr)
+    , showBeta(false)
 {
     esp_log_level_set(TAG, static_cast<esp_log_level_t>(LOG_LOCAL_LEVEL));
 
     // Fetch the current firmware version
     const esp_app_desc_t *app_desc = esp_app_get_description();
-    this->currentVersion = app_desc->version;
+    this->currentVersion = CVersion(app_desc->version);
 }
 
 void COta::init()
@@ -137,96 +138,172 @@ void COta::hide()
 
 void COta::showVersions()
 {
-    // Make sure the screen is clean in case we come back from the update screen
+    // Make sure the screen is clean
     this->hide();
 
     lv_lock();
 
-    // Create a container with ROW flex direction
-    auto versionsContainer = lv_obj_create(this->screen);
-    lv_obj_remove_style_all(versionsContainer);
-    lv_obj_set_size(versionsContainer, LV_PCT(80), LV_PCT(98));
-    lv_obj_center(versionsContainer);
-    lv_obj_set_flex_flow(versionsContainer, LV_FLEX_FLOW_COLUMN);
-    lv_obj_set_flex_align(versionsContainer, LV_FLEX_ALIGN_SPACE_BETWEEN, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
-    lv_obj_set_style_pad_row(versionsContainer, 10, 0);
+    auto &firmwares = this->fetcher.getFirmwares(this->showBeta);
 
-    // Title
-    auto labelTitle = lv_label_create(versionsContainer);
-    lv_label_set_text(labelTitle, "OTA Update");
+    // Vertical flex container
+    auto container = lv_obj_create(this->screen);
+    lv_obj_remove_style_all(container);
+    lv_obj_set_size(container, LV_PCT(80), LV_PCT(90));
+    lv_obj_center(container);
+    lv_obj_set_flex_flow(container, LV_FLEX_FLOW_COLUMN);
+    lv_obj_set_flex_align(container, LV_FLEX_ALIGN_SPACE_BETWEEN, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    lv_obj_set_style_pad_row(container, 10, 0);
 
-    // Current Version
-    auto currentVersionContainer = lv_obj_create(versionsContainer);
-    lv_obj_set_size(currentVersionContainer, LV_PCT(100), LV_SIZE_CONTENT);
-
-    auto labelCurrentVersionTitle = lv_label_create(currentVersionContainer);
-    lv_label_set_text(labelCurrentVersionTitle, "Firmware version");
-    lv_obj_set_style_text_decor(labelCurrentVersionTitle, LV_TEXT_DECOR_UNDERLINE, 0);
-    lv_obj_align(labelCurrentVersionTitle, LV_ALIGN_TOP_MID, 0, 0);
-
-    auto labelCurrentVersion = lv_label_create(currentVersionContainer);
-    lv_label_set_text(labelCurrentVersion, this->currentVersion);
-    lv_obj_align_to(labelCurrentVersion, labelCurrentVersionTitle, LV_ALIGN_OUT_BOTTOM_MID, 0, 10);
-
-    auto &firmwares = this->fetcher.getFirmwares(false);
-
-    // Available versions
-    if (firmwares.empty())
     {
-        auto buttonFetchVersions = lv_button_create(versionsContainer);
-        lv_obj_set_width(buttonFetchVersions, LV_PCT(80));
-        lv_obj_add_event_cb(buttonFetchVersions, COta::onClickFetchVersions, LV_EVENT_CLICKED, this);
-
-        auto labelFetchVersions = lv_label_create(buttonFetchVersions);
-        lv_label_set_text(labelFetchVersions, "Fetch firmwares");
-        lv_obj_center(labelFetchVersions);
+        // Title
+        auto labelTitle = lv_label_create(container);
+        lv_label_set_text(labelTitle, "OTA Update");
     }
-    else
+
     {
-        // Dropdown to select a version
-        auto dropDown = lv_dropdown_create(versionsContainer);
-        lv_obj_set_width(dropDown, lv_pct(90));
-        lv_obj_add_event_cb(dropDown, COta::onVersionChange, LV_EVENT_VALUE_CHANGED, this);
+        // Horizontal flex container
+        auto versionContainer = lv_obj_create(container);
+        lv_obj_remove_style_all(versionContainer);
+        lv_obj_set_size(versionContainer, LV_PCT(100), LV_SIZE_CONTENT);
+        lv_obj_center(versionContainer);
+        lv_obj_set_flex_flow(versionContainer, LV_FLEX_FLOW_ROW);
+        lv_obj_set_flex_align(versionContainer, LV_FLEX_ALIGN_SPACE_EVENLY, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER);
 
-        // Add options
-        lv_dropdown_clear_options(dropDown);
-
-        for (const auto &version : firmwares)
         {
-            lv_dropdown_add_option(dropDown, version.version.text.c_str(), LV_DROPDOWN_POS_LAST);
+            // Current Version
+            // We wrap to align with the selectVersionContainer below
+            auto wrapper = lv_obj_create(versionContainer);
+            lv_obj_remove_style_all(wrapper);
+            lv_obj_set_style_pad_all(wrapper, 3, 0);
+            lv_obj_set_flex_grow(wrapper, 1);
+            lv_obj_set_height(wrapper, LV_SIZE_CONTENT);
+
+            auto currentVersionContainer = lv_obj_create(wrapper);
+            lv_obj_set_size(currentVersionContainer, LV_PCT(100), LV_SIZE_CONTENT);
+            lv_obj_set_flex_flow(currentVersionContainer, LV_FLEX_FLOW_COLUMN);
+            lv_obj_set_flex_align(
+                currentVersionContainer,
+                LV_FLEX_ALIGN_SPACE_EVENLY,
+                LV_FLEX_ALIGN_CENTER,
+                LV_FLEX_ALIGN_CENTER);
+            //            lv_obj_set_style_pad_column(currentVersionContainer, 10, 0);
+
+            auto labelCurrentVersionTitle = lv_label_create(currentVersionContainer);
+            lv_label_set_text(labelCurrentVersionTitle, firmwares.empty() ? "Current version" : "Current");
+            lv_obj_set_style_text_decor(labelCurrentVersionTitle, LV_TEXT_DECOR_UNDERLINE, 0);
+
+            auto labelCurrentVersion = lv_label_create(currentVersionContainer);
+            lv_label_set_text(labelCurrentVersion, this->currentVersion.simplify().text.c_str());
         }
 
-        // Make sure the latest version is selected
-        lv_dropdown_set_selected(dropDown, 0);
-        this->selectedFirmware = firmwares[0];
+        if (!firmwares.empty())
+        {
+            // Dropdown to select a version
+            auto selectVersionContainer = lv_obj_create(versionContainer);
+            lv_obj_remove_style_all(selectVersionContainer);
+            // We have to add some padding otherwise the outline on the dropdown does not show
+            lv_obj_set_style_pad_all(selectVersionContainer, 3, 0);
+            lv_obj_set_flex_grow(selectVersionContainer, 1);
+            lv_obj_set_height(selectVersionContainer, LV_SIZE_CONTENT);
+            lv_obj_set_flex_flow(selectVersionContainer, LV_FLEX_FLOW_COLUMN);
+            lv_obj_set_flex_align(
+                selectVersionContainer,
+                LV_FLEX_ALIGN_SPACE_EVENLY,
+                LV_FLEX_ALIGN_CENTER,
+                LV_FLEX_ALIGN_CENTER);
+            lv_obj_set_style_pad_row(selectVersionContainer, 10, 0);
 
-        // Update button
-        auto buttonUpdate = lv_button_create(versionsContainer);
-        lv_obj_set_width(buttonUpdate, LV_PCT(80));
-        lv_obj_add_event_cb(buttonUpdate, COta::onClickUpdate, LV_EVENT_CLICKED, this);
+            auto dropDown = lv_dropdown_create(selectVersionContainer);
+            lv_obj_set_width(dropDown, LV_PCT(100));
+            lv_obj_center(dropDown);
+            lv_obj_add_event_cb(dropDown, COta::onVersionChange, LV_EVENT_VALUE_CHANGED, this);
+            lv_dropdown_clear_options(dropDown);
 
-        auto labelUpdate = lv_label_create(buttonUpdate);
-        lv_label_set_text(labelUpdate, "Update firmware");
-        lv_obj_center(labelUpdate);
+            for (const auto &version : firmwares)
+            {
+                lv_dropdown_add_option(dropDown, version.version.text.c_str(), LV_DROPDOWN_POS_LAST);
+            }
+
+            // Make sure the latest version is selected
+            lv_dropdown_set_selected(dropDown, 0);
+            this->selectedFirmware = firmwares[0];
+
+            auto checkboxBeta = lv_checkbox_create(selectVersionContainer);
+            lv_checkbox_set_text(checkboxBeta, "Show Beta");
+            if (this->showBeta)
+            {
+                lv_obj_add_state(checkboxBeta, LV_STATE_CHECKED);
+            }
+            lv_obj_add_event_cb(checkboxBeta, onCheckboxBetaToggle, LV_EVENT_CLICKED, this);
+        }
     }
 
-    // Cancel button
-    auto buttonCancel = lv_button_create(versionsContainer);
-    lv_obj_set_width(buttonCancel, LV_PCT(80));
-    lv_obj_add_event_cb(buttonCancel, COta::onClickExit, LV_EVENT_CLICKED, this);
+    {
+        // Fill the empty space
+        auto fill = lv_obj_create(container);
+        lv_obj_remove_style_all(fill);
+        lv_obj_set_flex_grow(fill, 1);
+    }
 
-    auto labelCancel = lv_label_create(buttonCancel);
-    lv_label_set_text(labelCancel, "Cancel");
-    lv_obj_center(labelCancel);
+    {
+        // Buttons
 
-    // Fill the empty space
-    auto fill = lv_obj_create(versionsContainer);
-    lv_obj_remove_style_all(fill);
-    lv_obj_set_flex_grow(fill, 1);
+        // Horizontal flex container
+        auto buttonsContainer = lv_obj_create(container);
+        lv_obj_remove_style_all(buttonsContainer);
+        lv_obj_set_style_pad_all(buttonsContainer, 3, 0);
+        lv_obj_set_size(buttonsContainer, LV_PCT(100), LV_SIZE_CONTENT);
+        lv_obj_center(buttonsContainer);
+        lv_obj_set_flex_flow(buttonsContainer, LV_FLEX_FLOW_ROW);
+        lv_obj_set_flex_align(buttonsContainer, LV_FLEX_ALIGN_SPACE_EVENLY, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER);
+        lv_obj_set_style_pad_column(buttonsContainer, 5, 0);
+
+        {
+            // Cancel button
+            auto buttonCancel = lv_button_create(buttonsContainer);
+            lv_obj_set_style_bg_color(buttonCancel, lv_palette_main(LV_PALETTE_BLUE_GREY), LV_PART_MAIN);
+            lv_obj_set_flex_grow(buttonCancel, 1);
+            lv_obj_add_event_cb(buttonCancel, COta::onClickExit, LV_EVENT_CLICKED, this);
+
+            auto labelCancel = lv_label_create(buttonCancel);
+            lv_label_set_text(labelCancel, "Cancel");
+            lv_obj_center(labelCancel);
+        }
+
+        if (firmwares.empty())
+        {
+            // Check online button
+            auto buttonFetchVersions = lv_button_create(buttonsContainer);
+            lv_group_focus_obj(buttonFetchVersions);
+            lv_obj_set_flex_grow(buttonFetchVersions, 1);
+            lv_obj_add_event_cb(buttonFetchVersions, COta::onClickFetchVersions, LV_EVENT_CLICKED, this);
+
+            auto labelFetchVersions = lv_label_create(buttonFetchVersions);
+            lv_label_set_text(labelFetchVersions, "Check");
+            lv_obj_center(labelFetchVersions);
+        }
+        else
+        {
+            // Update button
+            auto buttonUpdate = lv_button_create(buttonsContainer);
+            lv_obj_set_flex_grow(buttonUpdate, 1);
+            lv_obj_add_event_cb(buttonUpdate, COta::onClickUpdate, LV_EVENT_CLICKED, this);
+
+            auto labelUpdate = lv_label_create(buttonUpdate);
+            lv_label_set_text(labelUpdate, "Update");
+            lv_obj_center(labelUpdate);
+        }
+    }
 
     lv_screen_load(this->screen);
 
     lv_unlock();
+}
+
+void COta::showUpdate()
+{
+    // Clear the screen
+    this->hide();
 }
 
 void COta::onClickExit(lv_event_t *event)
@@ -246,10 +323,17 @@ void COta::onEvent(const OtaEvent &event)
         this->fetchFirmwares();
         this->showVersions();
         break;
+    case OtaEvent::ToggleBeta:
+        this->showBeta = !this->showBeta;
+        this->showVersions();
+        break;
     case OtaEvent::SelectedFirmware:
         break;
     case OtaEvent::UpdateFirmware:
         this->updateFirmware();
+        break;
+    case OtaEvent::UpdatePreview:
+        this->showUpdate();
         break;
     }
 }
@@ -265,7 +349,7 @@ void COta::onClickUpdate(lv_event_t *event)
 {
     auto self = static_cast<COta *>(lv_event_get_user_data(event));
 
-    self->sendEvent({OtaEvent::UpdateFirmware});
+    self->sendEvent({OtaEvent::UpdatePreview});
 }
 
 void COta::onVersionChange(lv_event_t *event)
@@ -278,6 +362,13 @@ void COta::onVersionChange(lv_event_t *event)
     ESP_LOGI(TAG, "Selected version index: %lu", index);
 
     self->selectedFirmware = versions[index];
+}
+
+void COta::onCheckboxBetaToggle(lv_event_t *event)
+{
+    auto self = static_cast<COta *>(lv_event_get_user_data(event));
+
+    self->sendEvent({OtaEvent::ToggleBeta});
 }
 
 bool COta::ensureWifi()

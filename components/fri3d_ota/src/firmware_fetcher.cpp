@@ -24,6 +24,7 @@ bool CFirmwareFetcher::refresh()
     dialog.show();
 
     this->firmwares = CFirmwares();
+    this->official = CFirmwares();
 
     auto buffer = CFirmwareFetcher::fetch();
 
@@ -34,7 +35,17 @@ bool CFirmwareFetcher::refresh()
 
     dialog.setStatus("Parsing version info");
 
-    if (!this->parse(buffer.c_str()))
+    if (this->parse(buffer.c_str()))
+    {
+        for (const auto &i : this->firmwares)
+        {
+            if (!i.beta)
+            {
+                this->official.emplace_back(i);
+            }
+        }
+    }
+    else
     {
         this->firmwares = CFirmwares();
     }
@@ -94,7 +105,14 @@ std::string CFirmwareFetcher::fetch()
 
 const CFirmwares &CFirmwareFetcher::getFirmwares(bool beta) const
 {
-    return this->firmwares;
+    if (beta)
+    {
+        return this->firmwares;
+    }
+    else
+    {
+        return this->official;
+    }
 }
 
 bool CFirmwareFetcher::parse(const char *json)

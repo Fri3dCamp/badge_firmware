@@ -11,6 +11,7 @@ class CFirmwareFetcher
 {
 private:
     CFirmwares firmwares;
+    CFirmwares official;
 
     static std::string fetch();
     bool parse(const char *json);

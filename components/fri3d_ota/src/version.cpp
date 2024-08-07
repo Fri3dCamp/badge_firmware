@@ -78,4 +78,16 @@ CVersion &CVersion::operator=(CVersion &&other) noexcept
     return *this;
 }
 
+CVersion CVersion::simplify() const
+{
+    CVersion result;
+
+    result.semver = this->semver;
+    result.semver.metadata = nullptr;
+    result.semver.prerelease = nullptr;
+    result.text = std::string(this->text, 0, this->text.find('-'));
+
+    return result;
+}
+
 } // namespace Fri3d::Apps::Ota

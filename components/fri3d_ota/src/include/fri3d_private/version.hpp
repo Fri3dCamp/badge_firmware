@@ -21,6 +21,8 @@ struct CVersion
 
     ~CVersion();
 
+    CVersion simplify() const;
+
     CVersion &operator=(const CVersion &other);
     CVersion &operator=(CVersion &&other) noexcept;
     friend bool operator<(const CVersion &l, const CVersion &r);

@@ -15,7 +15,9 @@ namespace Fri3d::Apps::Ota
 EVENT_CREATE_START(OtaEvent)
 EVENT_CREATE_TYPES_START()
     FetchFirmwares,
+    ToggleBeta,
     SelectedFirmware,
+    UpdatePreview,
     UpdateFirmware,
 EVENT_CREATE_TYPES_END()
 EVENT_CREATE_END();
@@ -24,18 +26,21 @@ EVENT_CREATE_END();
 class COta : public Application::CBaseApp, public Application::CThread<OtaEvent>
 {
 private:
-    const char *currentVersion;
+    CVersion currentVersion;
     lv_obj_t *screen;
     CFirmwareFetcher fetcher;
     CFirmware selectedFirmware;
+    bool showBeta;
 
     void hide();
     void showVersions();
+    void showUpdate();
 
     static void onClickExit(lv_event_t *event);
     static void onClickFetchVersions(lv_event_t *event);
     static void onClickUpdate(lv_event_t *event);
     static void onVersionChange(lv_event_t *event);
+    static void onCheckboxBetaToggle(lv_event_t *event);
 
     void onEvent(const OtaEvent &event) override;
 
