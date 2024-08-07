@@ -21,7 +21,7 @@ void app_main(void)
 
     auto &appManager = application.getAppManager();
 
-    CPartitionBoot micropython("Hardware test", "micropython");
+    CPartitionBoot micropython("MicroPython", "micropython");
     CPartitionBoot retroGo("Retro-Go Gaming", "launcher");
 
     // (for now) the order in which you register determines the display order in the launcher
