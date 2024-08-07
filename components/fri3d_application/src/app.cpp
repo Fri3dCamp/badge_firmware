@@ -37,6 +37,16 @@ IHardwareManager &CBaseApp::impl::getHardwareManager() const
     return *this->hardwareManager;
 }
 
+void CBaseApp::impl::setNvsManager(INvsManager *value)
+{
+    this->nvsManager = value;
+}
+
+INvsManager &CBaseApp::impl::getNvsManager() const
+{
+    return *this->nvsManager;
+}
+
 IAppManager &CBaseApp::getAppManager() const
 {
     return this->base->getAppManager();
@@ -45,6 +55,11 @@ IAppManager &CBaseApp::getAppManager() const
 IHardwareManager &CBaseApp::getHardwareManager() const
 {
     return this->base->getHardwareManager();
+}
+
+INvsManager &CBaseApp::getNvsManager() const
+{
+    return this->base->getNvsManager();
 }
 
 } // namespace Fri3d::Application

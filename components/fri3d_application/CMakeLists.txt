@@ -8,6 +8,7 @@ set(SRCS
         "src/hardware_wifi.cpp"
         "src/indev.cpp"
         "src/indev_buttons.cpp"
+        "src/nvs_manager.cpp"
         "src/lvgl.cpp"
         "src/lvgl/wait_dialog.cpp"
         "src/partition_boot.cpp"
@@ -20,7 +21,7 @@ if (CONFIG_FRI3D_JOYSTICK)
 endif ()
 
 set(DEPS
-        ""
+        "nvs_flash"
 )
 
 set(PRIV_DEPS

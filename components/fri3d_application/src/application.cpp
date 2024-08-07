@@ -28,8 +28,9 @@ void CApplication::init()
 
     ESP_LOGI(TAG, "Initializing application");
     this->hardwareManager.init();
+    this->nvsManager.init();
     this->lvgl.init();
-    this->appManager.init(this->hardwareManager);
+    this->appManager.init(this->hardwareManager, this->nvsManager);
 
     this->initialized = true;
 }

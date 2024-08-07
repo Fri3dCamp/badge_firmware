@@ -12,7 +12,6 @@ set(SRCS
 set(DEPS
         "fri3d_application"
         "esp_wifi"
-        "nvs_flash"
         "esp_https_ota"
         "mbedtls"
         "esp-tls"

@@ -30,6 +30,7 @@ private:
 
     // Pointers to other managers to store in the apps
     IHardwareManager *hardwareManager;
+    INvsManager *nvsManager;
 
     void onEvent(const AppManagerEvent &event) override;
 
@@ -38,7 +39,7 @@ private:
 public:
     CAppManager();
 
-    void init(IHardwareManager &hardware);
+    void init(IHardwareManager &hardware, INvsManager &nvs);
     void deinit();
 
     void registerApp(CBaseApp &app) override;

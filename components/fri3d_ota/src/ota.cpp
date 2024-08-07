@@ -1,6 +1,5 @@
 #include "esp_log.h"
 #include "esp_ota_ops.h"
-#include "nvs_flash.h"
 
 #include "fri3d_application/app_manager.hpp"
 #include "fri3d_application/hardware_wifi.hpp"
@@ -37,21 +36,8 @@ void COta::init()
     // If we get here, enough of the system is initialized to persist the flash
     auto running = CFlasher::persist();
 
-    // TODO: move this to a manager with proper initialization and error handling
-    ESP_ERROR_CHECK(nvs_flash_init());
+    auto nvs = this->getNvsManager().openSys();
 
-    esp_err_t err = nvs_flash_init();
-    if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND)
-    {
-        // NVS partition was truncated and needs to be erased
-        // Retry nvs_flash_init
-        ESP_ERROR_CHECK(nvs_flash_erase());
-        err = nvs_flash_init();
-    }
-    ESP_ERROR_CHECK(err);
-
-    nvs_handle_t nvs;
-    ESP_ERROR_CHECK(nvs_open("fri3d.sys", NVS_READWRITE, &nvs));
     // We store the number in the name of the OTA partition because MicroPython can only read i32
     ESP_ERROR_CHECK(nvs_set_i32(nvs, "boot_partition", running == "ota_0" ? 0 : 1));
 }

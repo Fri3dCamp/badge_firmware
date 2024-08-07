@@ -14,14 +14,16 @@ CAppManager::CAppManager()
     : CThread<AppManagerEvent>(TAG)
     , defaultApp(nullptr)
     , hardwareManager(nullptr)
+    , nvsManager(nullptr)
 {
     esp_log_level_set(TAG, static_cast<esp_log_level_t>(LOG_LOCAL_LEVEL));
 }
 
-void CAppManager::init(IHardwareManager &hardware)
+void CAppManager::init(IHardwareManager &hardware, INvsManager &nvs)
 {
     ESP_LOGI(TAG, "Initializing");
     this->hardwareManager = &hardware;
+    this->nvsManager = &nvs;
 }
 
 void CAppManager::deinit()
@@ -35,6 +37,7 @@ void CAppManager::deinit()
     ESP_LOGI(TAG, "Deinitializing");
     this->apps = std::vector<const CBaseApp *>();
 
+    this->nvsManager = nullptr;
     this->hardwareManager = nullptr;
 }
 
@@ -44,6 +47,7 @@ void CAppManager::registerApp(CBaseApp &app)
 
     app.base->setAppManager(this);
     app.base->setHardwareManager(this->hardwareManager);
+    app.base->setNvsManager(this->nvsManager);
 
     app.init();
 

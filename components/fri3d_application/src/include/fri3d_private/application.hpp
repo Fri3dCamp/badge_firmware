@@ -4,6 +4,7 @@
 #include "fri3d_private/app_manager.hpp"
 #include "fri3d_private/hardware_manager.hpp"
 #include "fri3d_private/lvgl.hpp"
+#include "fri3d_private/nvs_manager.hpp"
 
 namespace Fri3d::Application
 {
@@ -17,6 +18,7 @@ private:
     CAppManager appManager;
     CHardwareManager hardwareManager;
     CLVGL lvgl;
+    CNvsManager nvsManager;
 
 public:
     CApplication();

@@ -4,6 +4,7 @@
 #include <memory>
 
 #include "fri3d_application/hardware_manager.hpp"
+#include "fri3d_application/nvs_manager.hpp"
 
 // We include this here for convenience, as most apps will need it.
 #include "lvgl.hpp"
@@ -40,6 +41,13 @@ public:
      * @return the hardware manager instance
      */
     [[nodiscard]] IHardwareManager &getHardwareManager() const;
+
+    /**
+     * @brief access the NVS Manager
+     *
+     * @return the hardware manager instance
+     */
+    [[nodiscard]] INvsManager &getNvsManager() const;
 
     /**
      * @brief called upon registration in the app_manager, allows the app to do some initialization beforehand.
