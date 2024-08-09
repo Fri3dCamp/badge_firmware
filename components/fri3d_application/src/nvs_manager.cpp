@@ -57,6 +57,27 @@ CNvsHandle &CNvsHandle::operator=(const CNvsHandle &other)
     return *this;
 }
 
+std::string CNvsHandle::getString(const char *key)
+{
+    size_t size;
+    esp_err_t err;
+
+    err = nvs_get_str(*this->handle, key, nullptr, &size);
+    if (err == ESP_ERR_NVS_NOT_FOUND)
+    {
+        // Key does not exist
+        return "";
+    }
+    ESP_ERROR_CHECK(err);
+
+    std::string result;
+    result.resize(size);
+
+    ESP_ERROR_CHECK(nvs_get_str(*this->handle, key, &result.front(), &size));
+
+    return result;
+}
+
 CNvsManager::CNvsManager()
 {
     esp_log_level_set(TAG, static_cast<esp_log_level_t>(LOG_LOCAL_LEVEL));

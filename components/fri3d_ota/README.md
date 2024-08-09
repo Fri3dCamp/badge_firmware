@@ -69,6 +69,7 @@ It contains the following fields:
   * `type`: the type of image
     * `bootloader`: Currently not flashed by firmware, used by webflasher
     * `partition`: Currently not flashed by firmware, used by webflasher
+    * `ota-data`: Currently not flashed by firmware, used by webflasher
     * `main`: The main firmware image
     * `micropython`: MicroPython
     * `retro-launcher`: Launcher for Retro-Go

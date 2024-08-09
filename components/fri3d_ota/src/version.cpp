@@ -24,6 +24,11 @@ CVersion::CVersion(const char *version)
     : text(version)
     , semver({})
 {
+    if (text.empty())
+    {
+        text = "0.0.0";
+    }
+
     auto result = semver_parse(this->text.c_str(), &this->semver);
 
     if (result != 0)
@@ -35,11 +40,6 @@ CVersion::CVersion(const char *version)
 CVersion::~CVersion()
 {
     semver_free(&this->semver);
-}
-
-bool operator<(const CVersion &l, const CVersion &r)
-{
-    return semver_compare(l.semver, r.semver) == 1;
 }
 
 CVersion &CVersion::operator=(const CVersion &other)
@@ -88,6 +88,26 @@ CVersion CVersion::simplify() const
     result.text = std::string(this->text, 0, this->text.find('-'));
 
     return result;
+}
+
+bool CVersion::empty() const
+{
+    return *this == CVersion();
+}
+
+bool CVersion::operator==(const CVersion &other) const
+{
+    return semver_eq(this->semver, other.semver);
+}
+
+bool operator<(const CVersion &l, const CVersion &r)
+{
+    return semver_compare(l.semver, r.semver) == -1;
+}
+
+bool operator>(const CVersion &l, const CVersion &r)
+{
+    return semver_compare(l.semver, r.semver) == 1;
 }
 
 } // namespace Fri3d::Apps::Ota

@@ -147,7 +147,7 @@ bool CFirmwareFetcher::parse(const char *json)
             cJSON *imageType = cJSON_GetObjectItemCaseSensitive(imageNode, "type");
             cJSON *imageVersion = cJSON_GetObjectItemCaseSensitive(imageNode, "version");
             cJSON *url = cJSON_GetObjectItemCaseSensitive(imageNode, "url");
-            cJSON *size = cJSON_GetObjectItemCaseSensitive(firmwareNode, "size");
+            cJSON *size = cJSON_GetObjectItemCaseSensitive(imageNode, "size");
 
             if (imageType == nullptr || !CImage::jsonStringToType.contains(imageType->valuestring) ||
                 imageVersion == nullptr || url == nullptr)
@@ -169,12 +169,19 @@ bool CFirmwareFetcher::parse(const char *json)
             firmware.images[image.imageType] = image;
         }
 
-        this->firmwares.emplace_back(firmware);
+        if (firmware.images.contains(CImage::Main))
+        {
+            this->firmwares.emplace_back(firmware);
+        }
+        else
+        {
+            ESP_LOGW(TAG, "Firmware %s does not contain at least `main` image", firmware.version.text.c_str());
+        }
     }
 
     cJSON_Delete(root);
 
-    std::sort(this->firmwares.begin(), this->firmwares.end());
+    std::sort(this->firmwares.rbegin(), this->firmwares.rend());
 
     return true;
 }

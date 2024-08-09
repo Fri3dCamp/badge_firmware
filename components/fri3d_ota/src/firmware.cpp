@@ -17,7 +17,7 @@ CImage::TypeToStringMap CImage::typeToUIString = {
     {Main, "Main firmware"},
     {MicroPython, "MicroPython"},
     {RetroGoLauncher, "Retro-Go Launcher"},
-    {RetroGoCore, "Retro-Go"},
+    {RetroGoCore, "Retro-Go Gaming"},
     {RetroGoPRBoom, "Doom"},
     {VFS, "User Data (VFS)"},
 };

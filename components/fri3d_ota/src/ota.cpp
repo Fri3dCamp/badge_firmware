@@ -1,5 +1,6 @@
 #include "esp_log.h"
 #include "esp_ota_ops.h"
+#include "esp_system.h"
 
 #include "fri3d_application/app_manager.hpp"
 #include "fri3d_application/hardware_wifi.hpp"
@@ -12,16 +13,19 @@ namespace Fri3d::Apps::Ota
 
 static const char *TAG = "Fri3d::Apps::Ota::COta";
 
+static const char *NVS_MICROPYTHON = "microPython";
+static const char *NVS_RETRO_GO_LAUNCHER = "rgLauncher";
+static const char *NVS_RETRO_GO_CORE = "rgCore";
+static const char *NVS_RETRO_GO_PRBOOM = "rgPRBoom";
+static const char *NVS_VFS = "vfs";
+
 COta::COta()
     : Application::CThread<OtaEvent>(TAG)
     , screen(nullptr)
     , showBeta(false)
+    , updateMain(true)
 {
     esp_log_level_set(TAG, static_cast<esp_log_level_t>(LOG_LOCAL_LEVEL));
-
-    // Fetch the current firmware version
-    const esp_app_desc_t *app_desc = esp_app_get_description();
-    this->currentVersion = CVersion(app_desc->version);
 }
 
 void COta::init()
@@ -37,10 +41,22 @@ void COta::init()
     // If we get here, enough of the system is initialized to persist the flash
     auto running = CFlasher::persist();
 
-    auto nvs = this->getNvsManager().openSys();
-
     // We store the number in the name of the OTA partition because MicroPython can only read i32
+    auto nvs = this->getNvsManager().openSys();
     ESP_ERROR_CHECK(nvs_set_i32(nvs, "boot_partition", running == "ota_0" ? 0 : 1));
+
+    // Fetch the current firmware versions
+    // The main firmware version we get from the running image
+    const esp_app_desc_t *app_desc = esp_app_get_description();
+    this->currentVersions[CImage::Main] = CVersion(app_desc->version);
+    this->currentFirmware = this->currentVersions[CImage::Main].simplify();
+
+    // The other versions we fetch from NVS
+    this->currentVersions[CImage::MicroPython] = CVersion(nvs.getString(NVS_MICROPYTHON).c_str());
+    this->currentVersions[CImage::RetroGoLauncher] = CVersion(nvs.getString(NVS_RETRO_GO_LAUNCHER).c_str());
+    this->currentVersions[CImage::RetroGoCore] = CVersion(nvs.getString(NVS_RETRO_GO_CORE).c_str());
+    this->currentVersions[CImage::RetroGoPRBoom] = CVersion(nvs.getString(NVS_RETRO_GO_PRBOOM).c_str());
+    this->currentVersions[CImage::VFS] = CVersion(nvs.getString(NVS_VFS).c_str());
 }
 
 void COta::deinit()
@@ -98,6 +114,9 @@ void COta::updateFirmware()
         return;
     }
 
+    bool restart = false;
+    auto nvs = this->getNvsManager().openSys();
+
     for (const auto &item : this->selectedFirmware.images)
     {
         switch (item.first)
@@ -106,21 +125,57 @@ void COta::updateFirmware()
             CFlasher::flash(item.second);
             break;
         case CImage::MicroPython:
-            CFlasher::flash(item.second, "micropython");
+            if (this->updateMicroPython && *this->updateMicroPython)
+            {
+                if (CFlasher::flash(item.second, "micropython"))
+                {
+                    ESP_ERROR_CHECK(nvs_set_str(nvs, NVS_MICROPYTHON, item.second.version.text.c_str()));
+                    restart = true;
+                }
+            }
             break;
         case CImage::RetroGoLauncher:
-            CFlasher::flash(item.second, "launcher");
+            if (this->updateRetroGo && *this->updateRetroGo)
+            {
+                if (CFlasher::flash(item.second, "launcher"))
+                {
+                    ESP_ERROR_CHECK(nvs_set_str(nvs, NVS_RETRO_GO_LAUNCHER, item.second.version.text.c_str()));
+                }
+            }
             break;
         case CImage::RetroGoCore:
-            CFlasher::flash(item.second, "retro-core");
+            if (this->updateRetroGo && *this->updateRetroGo)
+            {
+                if (CFlasher::flash(item.second, "retro-core"))
+                {
+                    ESP_ERROR_CHECK(nvs_set_str(nvs, NVS_RETRO_GO_CORE, item.second.version.text.c_str()));
+                }
+            }
             break;
         case CImage::RetroGoPRBoom:
-            CFlasher::flash(item.second, "prboom-go");
+            if (this->updateRetroGo && *this->updateRetroGo)
+            {
+                if (CFlasher::flash(item.second, "prboom-go"))
+                {
+                    ESP_ERROR_CHECK(nvs_set_str(nvs, NVS_RETRO_GO_PRBOOM, item.second.version.text.c_str()));
+                }
+            }
             break;
         case CImage::VFS:
-            CFlasher::flash(item.second, "vfs");
+            if (this->updateVfs && *this->updateVfs)
+            {
+                if (CFlasher::flash(item.second, "vfs"))
+                {
+                    ESP_ERROR_CHECK(nvs_set_str(nvs, NVS_VFS, item.second.version.text.c_str()));
+                }
+            }
             break;
         }
+    }
+
+    if (restart)
+    {
+        esp_restart();
     }
 }
 
@@ -186,14 +241,13 @@ void COta::showVersions()
                 LV_FLEX_ALIGN_SPACE_EVENLY,
                 LV_FLEX_ALIGN_CENTER,
                 LV_FLEX_ALIGN_CENTER);
-            //            lv_obj_set_style_pad_column(currentVersionContainer, 10, 0);
 
             auto labelCurrentVersionTitle = lv_label_create(currentVersionContainer);
             lv_label_set_text(labelCurrentVersionTitle, firmwares.empty() ? "Current version" : "Current");
             lv_obj_set_style_text_decor(labelCurrentVersionTitle, LV_TEXT_DECOR_UNDERLINE, 0);
 
             auto labelCurrentVersion = lv_label_create(currentVersionContainer);
-            lv_label_set_text(labelCurrentVersion, this->currentVersion.simplify().text.c_str());
+            lv_label_set_text(labelCurrentVersion, this->currentFirmware.text.c_str());
         }
 
         if (!firmwares.empty())
@@ -227,6 +281,7 @@ void COta::showVersions()
             // Make sure the latest version is selected
             lv_dropdown_set_selected(dropDown, 0);
             this->selectedFirmware = firmwares[0];
+            this->sendEvent({OtaEvent::SelectedFirmware});
 
             auto checkboxBeta = lv_checkbox_create(selectVersionContainer);
             lv_checkbox_set_text(checkboxBeta, "Show Beta");
@@ -286,8 +341,9 @@ void COta::showVersions()
         {
             // Update button
             auto buttonUpdate = lv_button_create(buttonsContainer);
+            lv_group_focus_obj(buttonUpdate);
             lv_obj_set_flex_grow(buttonUpdate, 1);
-            lv_obj_add_event_cb(buttonUpdate, COta::onClickUpdate, LV_EVENT_CLICKED, this);
+            lv_obj_add_event_cb(buttonUpdate, COta::onClickPreview, LV_EVENT_CLICKED, this);
 
             auto labelUpdate = lv_label_create(buttonUpdate);
             lv_label_set_text(labelUpdate, "Update");
@@ -300,10 +356,137 @@ void COta::showVersions()
     lv_unlock();
 }
 
+void COta::onImageCheckboxToggle(lv_event_t *event)
+{
+    auto &active = *static_cast<std::optional<bool> *>(lv_event_get_user_data(event));
+
+    active = !*active;
+}
+
+void COta::addImageCheckbox(lv_obj_t *container, std::optional<bool> &active, CImage::ImageType imageType, bool enabled)
+{
+    auto checkbox = lv_checkbox_create(container);
+    lv_checkbox_set_text(checkbox, CImage::typeToUIString.at(imageType).c_str());
+    lv_obj_set_style_text_font(checkbox, &lv_font_montserrat_10, 10);
+    lv_obj_add_event_cb(checkbox, onImageCheckboxToggle, LV_EVENT_CLICKED, &active);
+
+    lv_state_t state = 0;
+    if (*active)
+    {
+        state |= LV_STATE_CHECKED;
+    }
+
+    if (!enabled)
+    {
+        state |= LV_STATE_DISABLED;
+    }
+
+    lv_obj_add_state(checkbox, state);
+
+    auto label = lv_label_create(container);
+    lv_label_set_text_fmt(
+        label,
+        "%s -> %s",
+        this->currentVersions[imageType].text.c_str(),
+        this->selectedFirmware.images[imageType].version.text.c_str());
+    lv_obj_set_width(label, LV_PCT(100));
+    lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_set_style_text_font(label, &lv_font_montserrat_10, 0);
+}
+
 void COta::showUpdate()
 {
     // Clear the screen
     this->hide();
+
+    lv_lock();
+
+    // Vertical flex container
+    auto container = lv_obj_create(this->screen);
+    lv_obj_remove_style_all(container);
+    lv_obj_set_size(container, LV_PCT(80), LV_PCT(90));
+    lv_obj_center(container);
+    lv_obj_set_flex_flow(container, LV_FLEX_FLOW_COLUMN);
+    lv_obj_set_flex_align(container, LV_FLEX_ALIGN_SPACE_BETWEEN, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    lv_obj_set_style_pad_row(container, 10, 0);
+
+    {
+        // Title
+        auto labelTitle = lv_label_create(container);
+        lv_label_set_text(labelTitle, "OTA Update");
+    }
+
+    {
+        // Versions
+        auto versionsContainer = lv_obj_create(container);
+        lv_obj_set_size(versionsContainer, LV_PCT(100), LV_SIZE_CONTENT);
+        lv_obj_set_flex_grow(versionsContainer, 1);
+        lv_obj_set_flex_flow(versionsContainer, LV_FLEX_FLOW_COLUMN);
+        lv_obj_set_flex_align(versionsContainer, LV_FLEX_ALIGN_SPACE_BETWEEN, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START);
+        // TODO: Tight fit, but scrolling needs to be fixed first
+        lv_obj_set_style_pad_row(versionsContainer, 1, 0);
+        lv_obj_set_style_pad_all(versionsContainer, 3, 0);
+        lv_obj_set_style_pad_left(versionsContainer, 10, 0);
+
+        this->addImageCheckbox(versionsContainer, this->updateMain, CImage::Main, false);
+
+        if (this->updateMicroPython)
+        {
+            this->addImageCheckbox(versionsContainer, this->updateMicroPython, CImage::MicroPython);
+        }
+
+        if (this->updateRetroGo)
+        {
+            this->addImageCheckbox(versionsContainer, this->updateRetroGo, CImage::RetroGoCore);
+        }
+
+        if (this->updateVfs)
+        {
+            this->addImageCheckbox(versionsContainer, this->updateVfs, CImage::VFS);
+        }
+    }
+
+    {
+        // Buttons
+
+        // Horizontal flex container
+        auto buttonsContainer = lv_obj_create(container);
+        lv_obj_remove_style_all(buttonsContainer);
+        lv_obj_set_style_pad_all(buttonsContainer, 3, 0);
+        lv_obj_set_size(buttonsContainer, LV_PCT(100), LV_SIZE_CONTENT);
+        lv_obj_center(buttonsContainer);
+        lv_obj_set_flex_flow(buttonsContainer, LV_FLEX_FLOW_ROW);
+        lv_obj_set_flex_align(buttonsContainer, LV_FLEX_ALIGN_SPACE_EVENLY, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER);
+        lv_obj_set_style_pad_column(buttonsContainer, 5, 0);
+
+        {
+            // Cancel button
+            auto buttonCancel = lv_button_create(buttonsContainer);
+            lv_obj_set_style_bg_color(buttonCancel, lv_palette_main(LV_PALETTE_BLUE_GREY), LV_PART_MAIN);
+            lv_obj_set_flex_grow(buttonCancel, 1);
+            lv_obj_add_event_cb(buttonCancel, COta::onClickCancel, LV_EVENT_CLICKED, this);
+
+            auto labelCancel = lv_label_create(buttonCancel);
+            lv_label_set_text(labelCancel, "Cancel");
+            lv_obj_center(labelCancel);
+        }
+
+        {
+            // Update button
+            auto buttonUpdate = lv_button_create(buttonsContainer);
+            lv_group_focus_obj(buttonUpdate);
+            lv_obj_set_flex_grow(buttonUpdate, 1);
+            lv_obj_add_event_cb(buttonUpdate, COta::onClickUpdate, LV_EVENT_CLICKED, this);
+
+            auto labelUpdate = lv_label_create(buttonUpdate);
+            lv_label_set_text(labelUpdate, "Update");
+            lv_obj_center(labelUpdate);
+        }
+    }
+
+    lv_screen_load(this->screen);
+
+    lv_unlock();
 }
 
 void COta::onClickExit(lv_event_t *event)
@@ -328,12 +511,62 @@ void COta::onEvent(const OtaEvent &event)
         this->showVersions();
         break;
     case OtaEvent::SelectedFirmware:
+        // As normal users don't care about Retro-Go's inner workings, we bundle them and say they should update if any
+        // of the images change
+        {
+            auto &images = this->selectedFirmware.images;
+
+            // If the same firmware version is selected as the actively running image, we presume the user is trying to
+            // recover from an error situation, so we just suggest flashing all.
+            bool force = this->currentFirmware == this->selectedFirmware.version;
+
+            // While by default we expect all images to be present in each firmware release (even if they are the same
+            // version), we do allow them to be missing, mostly for possible future compatibility
+            if (images.contains(CImage::MicroPython))
+            {
+                this->updateMicroPython =
+                    force || images.at(CImage::MicroPython).version > this->currentVersions.at(CImage::MicroPython);
+            }
+            else
+            {
+                this->updateMicroPython = std::nullopt;
+            }
+
+            if (images.contains(CImage::RetroGoCore))
+            {
+                // We do expect at least the core image to be there if one of the other images change as it is used to
+                // determine the version of Retro Go
+                this->updateRetroGo =
+                    force || images.at(CImage::RetroGoCore).version > this->currentVersions.at(CImage::RetroGoCore) ||
+                    (images.contains(CImage::RetroGoLauncher) &&
+                     images.at(CImage::RetroGoLauncher).version > this->currentVersions.at(CImage::RetroGoLauncher)) ||
+                    (images.contains(CImage::RetroGoPRBoom) &&
+                     images.at(CImage::RetroGoPRBoom).version > this->currentVersions.at(CImage::RetroGoPRBoom));
+            }
+            else
+            {
+                // No upgrade if no core
+                this->updateRetroGo = std::nullopt;
+            }
+
+            if (images.contains(CImage::VFS))
+            {
+                this->updateVfs = force || images.at(CImage::VFS).version > this->currentVersions.at(CImage::VFS);
+            }
+            else
+            {
+                this->updateVfs = std::nullopt;
+            }
+        }
         break;
     case OtaEvent::UpdateFirmware:
         this->updateFirmware();
         break;
     case OtaEvent::UpdatePreview:
         this->showUpdate();
+        break;
+    case OtaEvent::CancelUpdate:
+        this->showVersions();
         break;
     }
 }
@@ -345,7 +578,7 @@ void COta::onClickFetchVersions(lv_event_t *event)
     self->sendEvent({OtaEvent::FetchFirmwares});
 }
 
-void COta::onClickUpdate(lv_event_t *event)
+void COta::onClickPreview(lv_event_t *event)
 {
     auto self = static_cast<COta *>(lv_event_get_user_data(event));
 
@@ -356,12 +589,12 @@ void COta::onVersionChange(lv_event_t *event)
 {
     auto self = static_cast<COta *>(lv_event_get_user_data(event));
     auto dropDown = static_cast<lv_obj_t *>(lv_event_get_target(event));
-    auto &versions = self->fetcher.getFirmwares(false);
+    auto &versions = self->fetcher.getFirmwares(true);
 
     auto index = lv_dropdown_get_selected(dropDown);
-    ESP_LOGI(TAG, "Selected version index: %lu", index);
 
     self->selectedFirmware = versions[index];
+    self->sendEvent({OtaEvent::SelectedFirmware});
 }
 
 void COta::onCheckboxBetaToggle(lv_event_t *event)
@@ -388,6 +621,20 @@ bool COta::ensureWifi()
     }
 
     return result;
+}
+
+void COta::onClickCancel(lv_event_t *event)
+{
+    auto self = static_cast<COta *>(lv_event_get_user_data(event));
+
+    self->sendEvent({OtaEvent::CancelUpdate});
+}
+
+void COta::onClickUpdate(lv_event_t *event)
+{
+    auto self = static_cast<COta *>(lv_event_get_user_data(event));
+
+    self->sendEvent({OtaEvent::UpdateFirmware});
 }
 
 static COta ota_impl;

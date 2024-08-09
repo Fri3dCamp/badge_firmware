@@ -125,7 +125,7 @@ void CLVGL::init()
         lv_palette_main(LV_PALETTE_GREEN),
         lv_palette_main(LV_PALETTE_GREY),
         true,
-        &lv_font_montserrat_14);
+        &lv_font_montserrat_12);
 
     lv_display_set_theme(this->lv_display, theme);
 

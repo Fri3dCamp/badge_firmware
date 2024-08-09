@@ -21,11 +21,14 @@ struct CVersion
 
     ~CVersion();
 
-    CVersion simplify() const;
+    [[nodiscard]] CVersion simplify() const;
+    bool empty() const;
 
     CVersion &operator=(const CVersion &other);
     CVersion &operator=(CVersion &&other) noexcept;
     friend bool operator<(const CVersion &l, const CVersion &r);
+    friend bool operator>(const CVersion &l, const CVersion &r);
+    bool operator==(const CVersion &other) const;
 };
 
 } // namespace Fri3d::Apps::Ota

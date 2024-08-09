@@ -27,6 +27,14 @@ public:
 
     CNvsHandle &operator=(const CNvsHandle &other);
     operator nvs_handle_t(); // NOLINT(google-explicit-constructor)
+
+    /**
+     * @brief convenience function to fetch strings and auto-convert them to std::string
+     *
+     * @param key
+     * @return std::string containing the value, empty string if the key does not exist or is empty
+     */
+    std::string getString(const char *key);
 };
 
 class INvsManager
