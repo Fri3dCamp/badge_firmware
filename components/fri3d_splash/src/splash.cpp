@@ -102,7 +102,7 @@ void CSplash::work() const
     // We want the splash screen to display for at least 3 seconds, but longer if the song takes longer
     auto start = std::chrono::steady_clock::now();
 #ifdef CONFIG_FRI3D_BUZZER
-//    play_rtttl(dump_dump_s, 20);
+    play_rtttl(dump_dump_s, 20);
 #endif
     auto length = std::chrono::steady_clock::now() - start;
 
