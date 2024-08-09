@@ -48,8 +48,8 @@ typedef enum
 /* Button mappings */
 #define BSP_KEY_ENTER             BSP_BUTTON_A
 #define BSP_KEY_ESC               BSP_BUTTON_B
-#define BSP_KEY_NEXT              BSP_BUTTON_X
-#define BSP_KEY_PREV              BSP_BUTTON_Y
+#define BSP_KEY_NEXT              BSP_BUTTON_Y
+#define BSP_KEY_PREV              BSP_BUTTON_X
 #define BSP_KEY_HOME              BSP_BUTTON_MENU
 #define BSP_KEY_END               BSP_BUTTON_BOOT
 
