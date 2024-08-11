@@ -114,7 +114,6 @@ void COta::updateFirmware()
         return;
     }
 
-    bool restart = false;
     auto nvs = this->getNvsManager().openSys();
 
     for (const auto &item : this->selectedFirmware.images)
@@ -130,7 +129,6 @@ void COta::updateFirmware()
                 if (CFlasher::flash(item.second, "micropython"))
                 {
                     ESP_ERROR_CHECK(nvs_set_str(nvs, NVS_MICROPYTHON, item.second.version.text.c_str()));
-                    restart = true;
                 }
             }
             break;
@@ -173,10 +171,7 @@ void COta::updateFirmware()
         }
     }
 
-    if (restart)
-    {
-        esp_restart();
-    }
+    esp_restart();
 }
 
 bool COta::getVisible() const
