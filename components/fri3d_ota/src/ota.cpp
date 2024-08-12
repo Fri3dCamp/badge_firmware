@@ -13,11 +13,17 @@ namespace Fri3d::Apps::Ota
 
 static const char *TAG = "Fri3d::Apps::Ota::COta";
 
+static const char *NVS_BOOT_PARTITION = "boot_partition";
+static const char *NVS_APP_VERSION = "appVersion";
 static const char *NVS_MICROPYTHON = "microPython";
 static const char *NVS_RETRO_GO_LAUNCHER = "rgLauncher";
 static const char *NVS_RETRO_GO_CORE = "rgCore";
 static const char *NVS_RETRO_GO_PRBOOM = "rgPRBoom";
 static const char *NVS_VFS = "vfs";
+
+// DO NOT INCREASE WITHOUT CONSIDERING IMPLICATIONS!
+// NEVER DECREASE!
+static const int CURRENT_APP_VERSION = 1;
 
 COta::COta()
     : Application::CThread<OtaEvent>(TAG)
@@ -43,7 +49,7 @@ void COta::init()
 
     // We store the number in the name of the OTA partition because MicroPython can only read i32
     auto nvs = this->getNvsManager().openSys();
-    ESP_ERROR_CHECK(nvs_set_i32(nvs, "boot_partition", running == "ota_0" ? 0 : 1));
+    ESP_ERROR_CHECK(nvs_set_i32(nvs, NVS_BOOT_PARTITION, running == "ota_0" ? 0 : 1));
 
     // Fetch the current firmware versions
     // The main firmware version we get from the running image
@@ -114,14 +120,27 @@ void COta::updateFirmware()
         return;
     }
 
+    ESP_LOGI(TAG, "Starting firmware update");
+
     auto nvs = this->getNvsManager().openSys();
+    bool result = true;
 
     for (const auto &item : this->selectedFirmware.images)
     {
         switch (item.first)
         {
         case CImage::Main:
-            CFlasher::flash(item.second);
+            if (this->updateMain && *this->updateMain)
+            {
+                if (!CFlasher::flash(item.second))
+                {
+                    result = false;
+                }
+                else
+                {
+                    ESP_LOGE(TAG, "Error flashing main firmware.");
+                }
+            }
             break;
         case CImage::MicroPython:
             if (this->updateMicroPython && *this->updateMicroPython)
@@ -129,6 +148,11 @@ void COta::updateFirmware()
                 if (CFlasher::flash(item.second, "micropython"))
                 {
                     ESP_ERROR_CHECK(nvs_set_str(nvs, NVS_MICROPYTHON, item.second.version.text.c_str()));
+                }
+                else
+                {
+                    result = false;
+                    ESP_LOGE(TAG, "Error flashing MicroPython");
                 }
             }
             break;
@@ -139,6 +163,11 @@ void COta::updateFirmware()
                 {
                     ESP_ERROR_CHECK(nvs_set_str(nvs, NVS_RETRO_GO_LAUNCHER, item.second.version.text.c_str()));
                 }
+                else
+                {
+                    result = false;
+                    ESP_LOGE(TAG, "Error flashing Retro-Go Launcher");
+                }
             }
             break;
         case CImage::RetroGoCore:
@@ -147,6 +176,11 @@ void COta::updateFirmware()
                 if (CFlasher::flash(item.second, "retro-core"))
                 {
                     ESP_ERROR_CHECK(nvs_set_str(nvs, NVS_RETRO_GO_CORE, item.second.version.text.c_str()));
+                }
+                else
+                {
+                    result = false;
+                    ESP_LOGE(TAG, "Error flashing Retro-Go Core");
                 }
             }
             break;
@@ -157,6 +191,11 @@ void COta::updateFirmware()
                 {
                     ESP_ERROR_CHECK(nvs_set_str(nvs, NVS_RETRO_GO_PRBOOM, item.second.version.text.c_str()));
                 }
+                else
+                {
+                    result = false;
+                    ESP_LOGE(TAG, "Error flashing Retro-Go Doom");
+                }
             }
             break;
         case CImage::VFS:
@@ -166,10 +205,24 @@ void COta::updateFirmware()
                 {
                     ESP_ERROR_CHECK(nvs_set_str(nvs, NVS_VFS, item.second.version.text.c_str()));
                 }
+                else
+                {
+                    result = false;
+                    ESP_LOGE(TAG, "Error flashing VFS");
+                }
             }
             break;
         }
     }
+
+    // Make sure the active app version is written, but only when all the flashes succeeded
+    if (result)
+    {
+        ESP_LOGI(TAG, "Writing new application version to NVS");
+        ESP_ERROR_CHECK(nvs_set_u16(nvs, NVS_APP_VERSION, CURRENT_APP_VERSION));
+    }
+
+    ESP_ERROR_CHECK(nvs_commit(nvs));
 
     esp_restart();
 }
@@ -630,6 +683,60 @@ void COta::onClickUpdate(lv_event_t *event)
     auto self = static_cast<COta *>(lv_event_get_user_data(event));
 
     self->sendEvent({OtaEvent::UpdateFirmware});
+}
+
+void COta::handleNewAppVersion(uint16_t activeVersion)
+{
+    // This function contains all necessary code to switch between app versions
+
+    // First try to get the correct firmwares
+    this->fetchFirmwares();
+    auto &firmwares = this->fetcher.getFirmwares(true);
+    auto firmware = std::find_if(firmwares.begin(), firmwares.end(), [this](const CFirmware &x) {
+        return x.version == this->currentFirmware;
+    });
+    if (firmware == firmwares.end())
+    {
+        ESP_LOGE(TAG, "Could not find active firmware in update list! Aborting application version update.");
+        return;
+    }
+
+    this->selectedFirmware = *firmware;
+
+    // We don't really need to update main again
+    this->updateMain = false;
+
+    // Mark other images for update
+    this->updateMicroPython = true;
+    this->updateRetroGo = true;
+    this->updateVfs = true;
+
+    // Start update
+    this->updateFirmware();
+}
+
+void COta::onSystemStart()
+{
+    CBaseApp::onSystemStart();
+
+    auto nvs = this->getNvsManager().openSys();
+
+    // Check the application version, this allows for force running another update after rebooting into a firmware,
+    // for example if something changed to partition layouts, the update JSON or the images to flash.
+    uint16_t activeVersion = 0;
+    esp_err_t err = nvs_get_u16(nvs, NVS_APP_VERSION, &activeVersion);
+    if (err != ESP_OK && err != ESP_ERR_NVS_NOT_FOUND)
+    {
+        ESP_LOGE(TAG, "Could not fetch application version!");
+        ESP_ERROR_CHECK(err);
+    }
+
+    if (activeVersion != CURRENT_APP_VERSION)
+    {
+        // Application version changed, we hijack this event and take over full control
+        ESP_LOGW(TAG, "Application version mismatch, forcing update.");
+        this->handleNewAppVersion(activeVersion);
+    }
 }
 
 static COta ota_impl;

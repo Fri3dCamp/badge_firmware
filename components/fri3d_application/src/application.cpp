@@ -59,9 +59,11 @@ IAppManager &CApplication::getAppManager()
 void CApplication::run(const CBaseApp &app)
 {
     this->lvgl.start();
-    this->appManager.setDefaultApp(app);
 
+    this->appManager.setDefaultApp(app);
     this->appManager.start();
+
+    this->appManager.notifyStartStop(true);
 
     this->appManager.activateDefaultApp();
 
@@ -73,6 +75,7 @@ void CApplication::run(const CBaseApp &app)
         std::this_thread::sleep_for(5000ms);
     }
 
+    this->appManager.notifyStartStop(false);
     this->appManager.stop();
     this->lvgl.stop();
 }

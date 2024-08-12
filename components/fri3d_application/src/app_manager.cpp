@@ -151,4 +151,21 @@ void CAppManager::onEvent(const AppManagerEvent &event)
     }
 }
 
+void CAppManager::notifyStartStop(bool start) const
+{
+    for (auto item : this->apps)
+    {
+        auto app = const_cast<CBaseApp *>(item);
+
+        if (start)
+        {
+            app->onSystemStart();
+        }
+        else
+        {
+            app->onSystemStop();
+        }
+    }
+}
+
 } // namespace Fri3d::Application

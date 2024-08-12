@@ -58,6 +58,7 @@ private:
     bool ensureWifi();
     void fetchFirmwares();
     void updateFirmware();
+    void handleNewAppVersion(uint16_t activeVersion);
 
     static void onImageCheckboxToggle(lv_event_t *event);
     void addImageCheckbox(
@@ -65,6 +66,8 @@ private:
         std::optional<bool> &active,
         CImage::ImageType imageType,
         bool enabled = true);
+
+    void onSystemStart() override;
 
 public:
     COta();

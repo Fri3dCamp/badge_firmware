@@ -71,7 +71,7 @@ bool CFlasher::flash(const CImage &image, const char *partitionName)
 
     dialog.setProgress(100.0f);
 
-    return result == ESP_OK;
+    return result;
 }
 
 bool CFlasher::flashOta(

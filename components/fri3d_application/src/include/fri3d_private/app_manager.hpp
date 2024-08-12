@@ -49,6 +49,9 @@ public:
     void activateApp(const CBaseApp &app) override;
     void previousApp() override;
     void activateDefaultApp();
+
+    // TODO: turn this into an event system for apps
+    void notifyStartStop(bool start) const;
 };
 
 } // namespace Fri3d::Application

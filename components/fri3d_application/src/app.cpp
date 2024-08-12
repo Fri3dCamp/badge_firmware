@@ -62,4 +62,14 @@ INvsManager &CBaseApp::getNvsManager() const
     return this->base->getNvsManager();
 }
 
+void CBaseApp::onSystemStart()
+{
+    // Empty implementation
+}
+
+void CBaseApp::onSystemStop()
+{
+    // Empty implementation
+}
+
 } // namespace Fri3d::Application

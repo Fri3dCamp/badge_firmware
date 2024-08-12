@@ -51,7 +51,7 @@ public:
 
     /**
      * @brief called upon registration in the app_manager, allows the app to do some initialization beforehand.
-     * The app should not start performing tasks yet, unless it is a background service.
+     * The app should not start performing tasks yet
      *
      */
     virtual void init() = 0;
@@ -90,6 +90,17 @@ public:
      * another app after this call
      */
     virtual void deactivate() = 0;
+
+    /**
+     * @brief the base system and all apps have been completely initialized and things like LVGL and indev are running.
+     * If an app implements this function it can for example start background tasks.
+     */
+    virtual void onSystemStart();
+
+    /**
+     * @brief the app should immediately stop all background tasks
+     */
+    virtual void onSystemStop();
 };
 
 } // namespace Fri3d::Application
