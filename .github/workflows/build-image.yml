@@ -1,0 +1,9 @@
+name: Build Release Image
+on:
+  workflow_dispatch:
+
+jobs:
+  build_fox:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Starting automatic release build"
