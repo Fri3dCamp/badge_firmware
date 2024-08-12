@@ -1,9 +1,103 @@
 name: Build Release Image
 on:
   workflow_dispatch:
+    inputs:
+      tag:
+        required: true
+        description: Tag to build for
+  push:
+    tags:
+      - '*'
 
 jobs:
-  build_fox:
+  prepare:
+    name: Select the tag to build for and create Draft release
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
     steps:
-      - run: echo "Starting automatic release build"
+      - name: Set tag
+        id: tag
+        run: |
+          if [[ "${{ github.event_name }}" != "push" ]]; then
+            tag="${{ github.event.inputs.tag }}"
+          else
+            tag=$(basename "${{ github.ref }}")
+          fi
+          echo "tag=$tag" >> $GITHUB_OUTPUT
+      - name: Create GitHub Draft Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          tag="${{ steps.tag.outputs.tag }}"
+          body="Pre-release for @${{ steps.tag.outputs.tag }}"
+          gh release create --draft "$tag" --title "$tag-pre" --notes "$body"
+
+  build_fox:
+    needs: [prepare]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.tag }}
+          submodules: 'recursive'
+      - name: esp-idf build
+        uses: espressif/esp-idf-ci-action@v1
+        with:
+          esp_idf_version: v5.2.2
+          target: esp32s3
+          path: 'boards/fox'
+      - name: Upload binaries to draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          cd boards/fox/build
+          sudo chown -R $(whoami) .
+          mv bootloader/bootloader.bin bootloader_fox.bin
+          mv ota_data_initial.bin ota_data_fox.bin
+          mv partition_table/partition-table.bin partition_table_fox.bin
+          gh release upload "${{ needs.prepare.outputs.tag }}" \
+            "bootloader_fox.bin" \
+            "ota_data_fox.bin" \
+            "partition_table_fox.bin" \
+            "fri3d_firmware_fox.bin"
+
+  build_octopus:
+    needs: [prepare]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.tag }}
+          submodules: 'recursive'
+      - name: esp-idf build
+        uses: espressif/esp-idf-ci-action@v1
+        with:
+          esp_idf_version: v5.2.2
+          target: esp32
+          path: 'boards/octopus'
+      - name: Upload binaries to draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          cd boards/octopus/build
+          sudo chown -R $(whoami) .
+          mv bootloader/bootloader.bin bootloader_octopus.bin
+          mv ota_data_initial.bin ota_data_octopus.bin
+          mv partition_table/partition-table.bin partition_table_octopus.bin
+          gh release upload "${{ needs.prepare.outputs.tag }}" \
+            "bootloader_octopus.bin" \
+            "ota_data_octopus.bin" \
+            "partition_table_octopus.bin" \
+            "fri3d_firmware_octopus.bin"
