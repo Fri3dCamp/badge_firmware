@@ -135,9 +135,6 @@ void COta::updateFirmware()
                 if (!CFlasher::flash(item.second))
                 {
                     result = false;
-                }
-                else
-                {
                     ESP_LOGE(TAG, "Error flashing main firmware.");
                 }
             }
