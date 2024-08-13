@@ -22,7 +22,6 @@ void app_main(void)
     auto &appManager = application.getAppManager();
 
     CPartitionBoot micropython("MicroPython", "micropython");
-    CPartitionBoot retroGo("Retro-Go Gaming", "launcher");
 
     // (for now) the order in which you register determines the display order in the launcher
     appManager.registerApp(Launcher::launcher);
@@ -30,7 +29,11 @@ void app_main(void)
     appManager.registerApp(Ota::ota);
     appManager.registerApp(Hello::hello);
     appManager.registerApp(micropython);
+
+#ifndef CONFIG_FRI3D_BADGE_OCTOPUS
+    CPartitionBoot retroGo("Retro-Go Gaming", "launcher");
     appManager.registerApp(retroGo);
+#endif
 
     application.run(Launcher::launcher);
 
