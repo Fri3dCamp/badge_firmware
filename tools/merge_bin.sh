@@ -7,10 +7,12 @@ case $badge in
 
   fox)
     device=/dev/ttyACM0
+    chip=esp32s3
     ;;
 
   octopus)
     device=/dev/ttyUSB0
+    chip=esp32
     ;;
 
   *)
@@ -22,7 +24,7 @@ esac
 output="${images}/full_firmware_${badge}.img"
 
 esptool.py \
-    --chip esp32s3 \
+    --chip ${chip} \
     merge_bin --flash_mode dio --flash_freq 80m --flash_size 16MB \
     -o "${output}" \
     0x0 "${images}"/bootloader_"${badge}".bin \
