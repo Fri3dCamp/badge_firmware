@@ -22,3 +22,5 @@ idf_component_register(
 )
 
 fri3d_set_loglevel()
+
+nvs_create_partition_image("nvs" "nvs.csv")

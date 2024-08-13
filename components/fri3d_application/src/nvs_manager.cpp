@@ -46,6 +46,7 @@ CNvsHandle &CNvsHandle::operator=(const CNvsHandle &other)
     if (&other != this)
     {
         this->handle = other.handle;
+        this->ns = other.ns;
 
         if (this->handle.use_count() == 2)
         {
@@ -88,6 +89,7 @@ void CNvsManager::init()
     esp_err_t err = nvs_flash_init();
     if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND)
     {
+        ESP_LOGW(TAG, "Invalid NVS partition, reformatting");
         // NVS partition was truncated and needs to be erased
         // Retry nvs_flash_init
         ESP_ERROR_CHECK(nvs_flash_erase());

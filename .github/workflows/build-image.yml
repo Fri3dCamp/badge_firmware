@@ -61,10 +61,12 @@ jobs:
           cd boards/fox/build
           sudo chown -R $(whoami) .
           mv bootloader/bootloader.bin bootloader_fox.bin
+          mv nvs.bin nvs_fox.bin
           mv ota_data_initial.bin ota_data_fox.bin
           mv partition_table/partition-table.bin partition_table_fox.bin
           gh release upload "${{ needs.prepare.outputs.tag }}" \
             "bootloader_fox.bin" \
+            "nvs_fox.bin" \
             "ota_data_fox.bin" \
             "partition_table_fox.bin" \
             "fri3d_firmware_fox.bin"
@@ -94,10 +96,12 @@ jobs:
           cd boards/octopus/build
           sudo chown -R $(whoami) .
           mv bootloader/bootloader.bin bootloader_octopus.bin
+          mv nvs.bin nvs_octopus.bin
           mv ota_data_initial.bin ota_data_octopus.bin
           mv partition_table/partition-table.bin partition_table_octopus.bin
           gh release upload "${{ needs.prepare.outputs.tag }}" \
             "bootloader_octopus.bin" \
+            "nvs_octopus.bin" \
             "ota_data_octopus.bin" \
             "partition_table_octopus.bin" \
             "fri3d_firmware_octopus.bin"

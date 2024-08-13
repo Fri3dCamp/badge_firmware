@@ -23,6 +23,7 @@ static const char *NVS_VFS = "vfs";
 
 // DO NOT INCREASE WITHOUT CONSIDERING IMPLICATIONS!
 // NEVER DECREASE!
+// If you change this, also update the value in fri3d_firmware/nvs.csv
 static const int CURRENT_APP_VERSION = 1;
 
 COta::COta()

@@ -45,6 +45,7 @@ def flash(badge):
                     "0x0", f"images/bootloader_{badge}.bin",
                     "0x8000", f"images/partition_table_{badge}.bin",
                     "0x9000", f"images/ota_data_{badge}.bin",
+                    "0xb000", f"images/nvs_{badge}.bin",
                     "0x10000", f"images/fri3d_firmware_{badge}.bin",
                     "0x210000", f"images/fri3d_firmware_{badge}.bin",
                     "0x410000", f"images/micropython_{badge}.bin",
@@ -55,6 +56,7 @@ def flash(badge):
                 ]
                 )
         time.sleep(1)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
