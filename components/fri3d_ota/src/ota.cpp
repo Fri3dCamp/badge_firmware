@@ -431,13 +431,18 @@ void COta::addImageCheckbox(lv_obj_t *container, std::optional<bool> &active, CI
 
     lv_obj_add_state(checkbox, state);
 
-    auto label = lv_label_create(container);
+    auto labelBox = lv_obj_create(container);
+    lv_obj_remove_style_all(labelBox);
+    lv_obj_set_size(labelBox, LV_PCT(100), LV_SIZE_CONTENT);
+
+    auto label = lv_label_create(labelBox);
     lv_label_set_text_fmt(
         label,
         "%s -> %s",
         this->currentVersions[imageType].text.c_str(),
         this->selectedFirmware.images[imageType].version.text.c_str());
-    lv_obj_set_width(label, LV_PCT(100));
+    lv_obj_set_width(label, LV_PCT(90));
+    lv_obj_align(label, LV_ALIGN_RIGHT_MID, 0, 0);
     lv_obj_set_style_text_align(label, LV_TEXT_ALIGN_CENTER, 0);
     lv_obj_set_style_text_font(label, &lv_font_montserrat_10, 0);
 }
