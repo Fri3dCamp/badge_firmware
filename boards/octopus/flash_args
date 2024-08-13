@@ -1,0 +1,8 @@
+--before default_reset --after no_reset --chip esp32  write_flash --flash_mode dio --flash_size 16MB --flash_freq 80m --baud 460800
+0x0 bootloader_octopus.bin
+0x8000 partition_table_octopus.bin
+0x9000 ota_data_octopus.bin
+0xb000 nvs_octopus.bin
+0x10000 fri3d_firmware_octopus.bin
+0x210000 fri3d_firmware_octopus.bin
+0x410000 micropython_octopus.bin

@@ -1,0 +1,12 @@
+--before default_reset --after no_reset --chip esp32s3  write_flash --flash_mode dio --flash_size 16MB --flash_freq 80m --baud 460800
+0x0 bootloader_fox.bin
+0x8000 partition_table_fox.bin
+0x9000 ota_data_fox.bin
+0xb000 nvs_fox.bin
+0x10000 fri3d_firmware_fox.bin
+0x210000 fri3d_firmware_fox.bin
+0x410000 micropython_fox.bin
+0x710000 retro_go_launcher_fox.bin
+0x810000 retro_go_core_fox.bin
+0x8b0000 retro_go_prboom_fox.bin
+0x990000 vfs_fox.bin
