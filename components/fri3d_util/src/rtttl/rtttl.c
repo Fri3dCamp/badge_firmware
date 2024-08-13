@@ -229,7 +229,7 @@ void play_rtttl_task(const char *song, uint8_t volume)
         "play_rtttl",
         2048,
         (void *const)&task_parameter,
-        tskIDLE_PRIORITY + 1,
+        uxTaskPriorityGet(NULL) + 10,
         &xHandle,
         0);
     configASSERT(xHandle);
